@@ -64,3 +64,42 @@ BUILDING_NOISE = {
     "板楼": 40,
     "自建房": 45,
 }
+
+# ============================================================
+# 图片抓取配置
+# ============================================================
+# Clash 代理地址（用于访问中文租房网站）
+SCRAPER_PROXY = {
+    "http": "http://127.0.0.1:7897",
+    "https": "http://127.0.0.1:7897",
+}
+
+# 图片本地存储目录（相对于项目根目录）
+IMAGES_DIR = "images"
+
+# 每个房源最少/最多抓取图片数
+MIN_IMAGES_PER_HOUSE = 5
+MAX_IMAGES_PER_HOUSE = 10
+
+# 请求间隔范围（秒），防止被封 IP
+REQUEST_DELAY_MIN = 2.0
+REQUEST_DELAY_MAX = 5.0
+
+# 搜索平台优先级（按顺序尝试）
+SEARCH_PLATFORMS = [
+    {
+        "name": "链家",
+        "search_url": "https://gz.lianjia.com/zufang/rs{}/",
+        "base_url": "https://gz.lianjia.com",
+    },
+    {
+        "name": "贝壳",
+        "search_url": "https://gz.ke.com/zufang/rs{}/",
+        "base_url": "https://gz.ke.com",
+    },
+    {
+        "name": "58同城",
+        "search_url": "https://gz.58.com/zufang/?key={}",
+        "base_url": "https://gz.58.com",
+    },
+]

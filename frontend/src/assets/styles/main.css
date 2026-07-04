@@ -1,0 +1,168 @@
+/* ========== CSS Variables ========== */
+:root {
+  --primary: #4A90D9;
+  --primary-dark: #357ABD;
+  --accent: #667eea;
+  --accent2: #764ba2;
+  --success: #27ae60;
+  --warning: #f39c12;
+  --danger: #e74c3c;
+  --bg: #f5f7fa;
+  --bg-card: #ffffff;
+  --text: #2c3e50;
+  --text-secondary: #7f8c8d;
+  --border: #e8ecf1;
+  --shadow: 0 2px 12px rgba(0,0,0,0.06);
+  --shadow-hover: 0 6px 24px rgba(0,0,0,0.12);
+  --radius: 12px;
+}
+
+/* ========== Reset ========== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Microsoft YaHei','PingFang SC',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+a{color:var(--primary);text-decoration:none}
+img{max-width:100%;height:auto}
+button{cursor:pointer;font-family:inherit}
+
+/* ========== Layout ========== */
+#app{min-height:100vh;display:flex;flex-direction:column}
+.page-container{flex:1;max-width:1280px;margin:0 auto;padding:24px 20px;width:100%}
+
+/* ========== Header ========== */
+.app-header{background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:#fff;padding:0 24px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(102,126,234,0.3)}
+.header-inner{max-width:1280px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:60px}
+.header-logo{font-size:20px;font-weight:700;letter-spacing:0.5px}
+.header-nav{display:flex;gap:24px}
+.header-nav a{color:rgba(255,255,255,0.85);font-size:15px;transition:color .2s;font-weight:500}
+.header-nav a:hover,.header-nav a.router-link-active{color:#fff}
+
+/* ========== Footer ========== */
+.app-footer{background:#fff;border-top:1px solid var(--border);padding:16px 24px;text-align:center;color:var(--text-secondary);font-size:13px;margin-top:auto}
+
+/* ========== Hero (HomeView) ========== */
+.hero{background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);padding:80px 24px;text-align:center;color:#fff}
+.hero h1{font-size:36px;font-weight:700;margin-bottom:12px}
+.hero p{font-size:17px;opacity:0.9;max-width:600px;margin:0 auto 32px}
+.hero-search{max-width:640px;margin:0 auto;display:flex;gap:12px;background:#fff;border-radius:50px;padding:6px;box-shadow:0 8px 32px rgba(0,0,0,0.15)}
+.hero-search input{flex:1;border:none;outline:none;padding:12px 20px;font-size:16px;border-radius:50px}
+.hero-search button{background:var(--accent);color:#fff;border:none;padding:12px 32px;border-radius:50px;font-size:16px;font-weight:600;transition:background .2s}
+.hero-search button:hover{background:var(--accent2)}
+
+/* ========== Feature Cards (HomeView) ========== */
+.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;margin-top:-40px;padding:0 24px 60px;position:relative;z-index:1}
+.feature-card{background:#fff;border-radius:var(--radius);padding:24px;text-align:center;box-shadow:var(--shadow);transition:transform .2s,box-shadow .2s}
+.feature-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-hover)}
+.feature-icon{font-size:40px;margin-bottom:12px}
+.feature-card h3{font-size:17px;margin-bottom:8px;color:var(--text)}
+.feature-card p{font-size:14px;color:var(--text-secondary)}
+
+/* ========== Search Panel ========== */
+.search-panel{background:#fff;border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:24px}
+.search-panel h3{font-size:16px;margin-bottom:16px;color:var(--text)}
+.filter-group{margin-bottom:14px}
+.filter-group label{display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:4px}
+.filter-districts{display:flex;flex-wrap:wrap;gap:6px}
+.filter-districts button{border:1.5px solid var(--border);background:#fff;border-radius:20px;padding:4px 14px;font-size:13px;transition:all .2s}
+.filter-districts button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.filter-districts button:hover:not(.active){border-color:var(--accent);color:var(--accent)}
+.filter-slider{width:100%;margin:4px 0}
+.filter-select{width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;outline:none;background:#fff}
+.filter-select:focus{border-color:var(--accent)}
+.sort-options{display:flex;flex-wrap:wrap;gap:6px}
+.sort-options button{border:1.5px solid var(--border);background:#fff;border-radius:8px;padding:6px 12px;font-size:13px;transition:all .2s}
+.sort-options button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.sort-options button:hover:not(.active){border-color:var(--accent);color:var(--accent)}
+.search-btn{width:100%;padding:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;margin-top:12px;transition:opacity .2s}
+.search-btn:hover{opacity:0.9}
+
+/* ========== House Card ========== */
+.house-card{background:#fff;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);transition:transform .2s,box-shadow .2s;cursor:pointer;display:flex;margin-bottom:16px}
+.house-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-hover)}
+.house-card-img{width:200px;min-height:150px;object-fit:cover;background:linear-gradient(135deg,#e8eaf6,#c5cae9);display:flex;align-items:center;justify-content:center;color:#9fa8da;font-size:32px;flex-shrink:0}
+.house-card-body{flex:1;padding:18px 22px;display:flex;justify-content:space-between;align-items:flex-start}
+.house-card-info{flex:1}
+.house-card-title{font-size:17px;font-weight:700;color:var(--text);margin-bottom:6px}
+.house-card-meta{font-size:13px;color:var(--text-secondary);margin-bottom:8px}
+.house-card-stats{display:flex;gap:16px;flex-wrap:wrap}
+.house-card-stat{font-size:13px;display:flex;align-items:center;gap:4px}
+.house-card-right{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.house-card-price{font-size:24px;font-weight:800;color:var(--danger)}
+.house-card-price-unit{font-size:13px;color:var(--text-secondary);font-weight:400}
+.house-card-tags{display:flex;gap:6px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600}
+.badge-green{background:#d4edda;color:#155724}
+.badge-yellow{background:#fff3cd;color:#856404}
+.badge-red{background:#f8d7da;color:#721c24}
+
+/* ========== Detail Page ========== */
+.detail-header{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;padding:32px;border-radius:var(--radius);margin-bottom:24px;position:relative}
+.detail-header h2{font-size:26px;margin-bottom:8px}
+.detail-breadcrumb{margin-bottom:16px}
+.detail-breadcrumb button{background:rgba(255,255,255,0.2);color:#fff;border:none;padding:8px 18px;border-radius:20px;font-size:14px;transition:background .2s}
+.detail-breadcrumb button:hover{background:rgba(255,255,255,0.35)}
+
+/* Image Gallery */
+.image-gallery{margin-bottom:24px}
+.image-gallery-main{border-radius:var(--radius);overflow:hidden;margin-bottom:10px;max-height:420px}
+.image-gallery-main img{width:100%;height:auto;object-fit:cover}
+.image-gallery-thumbs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.image-gallery-thumb{width:80px;height:60px;border-radius:8px;object-fit:cover;cursor:pointer;border:2px solid transparent;transition:border-color .2s;flex-shrink:0;opacity:0.6}
+.image-gallery-thumb:hover,.image-gallery-thumb.active{border-color:var(--accent);opacity:1}
+
+/* Info Grid */
+.info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:24px}
+.info-item{background:#fff;border-radius:10px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,0.04);border:1px solid var(--border)}
+.info-item-label{font-size:12px;color:var(--text-secondary);margin-bottom:2px}
+.info-item-value{font-size:15px;font-weight:600;color:var(--text)}
+
+/* Section */
+.section{margin-bottom:28px}
+.section-title{font-size:18px;font-weight:700;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid var(--accent)}
+
+/* Metric Cards */
+.metric-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.metric-card{background:#fff;border-radius:var(--radius);padding:20px;text-align:center;box-shadow:var(--shadow)}
+.metric-card h3{font-size:15px;color:var(--text);margin-bottom:8px}
+.metric-card .value{font-size:36px;font-weight:800;margin:8px 0}
+.metric-card .detail-btn{color:var(--primary);font-size:13px;cursor:pointer;margin-top:8px}
+
+/* Advice Card */
+.advice-card{border-radius:var(--radius);padding:24px;margin-bottom:20px;box-shadow:var(--shadow)}
+.advice-recommend{background:linear-gradient(135deg,#d4edda,#c3e6cb);border:2px solid var(--success)}
+.advice-consider{background:linear-gradient(135deg,#fff3cd,#ffeaa7);border:2px solid var(--warning)}
+.advice-not{background:linear-gradient(135deg,#f8d7da,#f5c6cb);border:2px solid var(--danger)}
+.advice-card h2{font-size:24px;margin-bottom:12px}
+.advice-card p{font-size:15px;line-height:1.7}
+
+/* Tag Cloud */
+.tag-cloud{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.tag-pos{background:#d4edda;color:#155724;padding:3px 10px;border-radius:12px;font-size:12px}
+.tag-neg{background:#f8d7da;color:#721c24;padding:3px 10px;border-radius:12px;font-size:12px}
+
+/* Review List */
+.review-item{background:#f8f9fa;border-radius:10px;padding:14px;margin-bottom:8px}
+.review-item .review-header{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px;color:var(--text-secondary)}
+.review-item .review-text{font-size:14px;line-height:1.6}
+
+/* Loading & Empty */
+.loading{text-align:center;padding:40px;color:var(--text-secondary)}
+.skeleton{background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:8px}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.empty-state{text-align:center;padding:60px 20px;color:var(--text-secondary)}
+.empty-state .icon{font-size:64px;margin-bottom:16px}
+
+/* ========== Responsive ========== */
+@media(max-width:768px){
+  .hero h1{font-size:26px}
+  .hero-search{flex-direction:column;border-radius:16px;padding:12px}
+  .hero-search input{border-radius:12px;border:1.5px solid var(--border)}
+  .hero-search button{border-radius:12px;width:100%}
+  .features{grid-template-columns:1fr;margin-top:0;padding:24px}
+  .house-card{flex-direction:column}
+  .house-card-img{width:100%;height:180px}
+  .house-card-body{flex-direction:column;gap:12px}
+  .house-card-right{flex-direction:row;align-items:center;justify-content:space-between;width:100%}
+  .metric-cards{grid-template-columns:1fr}
+  .detail-header{padding:20px}
+  .info-grid{grid-template-columns:repeat(2,1fr)}
+}

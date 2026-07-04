@@ -6,7 +6,7 @@ rental-shield 种子数据脚本
 import random
 import hashlib
 from datetime import datetime, timedelta
-from db import init_db, get_session, House, Review, PriceHistory, Landlord
+from db import init_db, get_session, House, Review, PriceHistory, Landlord, ListingImage
 import config
 
 random.seed(42)  # 固定随机种子，确保每次生成的数据一致
@@ -22,7 +22,7 @@ def generate_data():
     session = get_session()
 
     # 清空旧数据（如果存在）
-    for table in [PriceHistory, Review, House, Landlord]:
+    for table in [PriceHistory, Review, ListingImage, House, Landlord]:
         session.query(table).delete()
     session.commit()
 

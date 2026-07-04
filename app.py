@@ -4,11 +4,12 @@ rental-shield Streamlit 前端界面
 
 运行方式：streamlit run app.py
 """
+import os
 import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-from db import get_houses_by_filter, get_house_by_id, get_house_reviews, get_landlord_by_phone
+from db import get_houses_by_filter, get_house_by_id, get_house_reviews, get_landlord_by_phone, get_house_images
 from utils import simulate_sunlight_hours, simulate_noise_level, risk_label
 from agents import ReviewMinerAgent, LandlordRiskAgent, FinalAdvisorAgent
 import config
@@ -318,18 +319,40 @@ def render_list_page(districts, layout, price_range, sort_by):
 
         risk_label_text = risk_label(risk_score)
 
-        # 使用 columns 布局卡片
-        cols = st.columns([4, 1.5, 2, 1.8])
+        # 使用 columns 布局卡片，第一列为图片缩略图
+        cols = st.columns([1, 3, 1.5, 2, 1.8])
+
+        # 列0：房源缩略图
         with cols[0]:
+            images = get_house_images(h.id)
+            if images and os.path.exists(images[0].image_path):
+                st.image(images[0].image_path, use_container_width=True)
+            else:
+                # 无图片时显示占位
+                st.markdown(f"""
+                <div style="width:100%;aspect-ratio:4/3;background:#e8eaf6;border-radius:8px;
+                            display:flex;align-items:center;justify-content:center;color:#9fa8da;font-size:12px;">
+                    🏠
+                </div>
+                """, unsafe_allow_html=True)
+
+        # 列1：标题和区域
+        with cols[1]:
             st.markdown(f"**{h.title}**")
             st.caption(f"📍 {h.district} · {h.community}")
-        with cols[1]:
+
+        # 列2：价格
+        with cols[2]:
             st.markdown(f"<span class='house-price'>¥{h.price}</span><span class='house-price-unit'>/月</span>", unsafe_allow_html=True)
             st.caption(f"{h.layout} · {h.area}㎡")
-        with cols[2]:
+
+        # 列3：光照和隔音评级
+        with cols[3]:
             st.markdown(f"<span title='日照等级'>{light_icon(light['level'])} {light['level']} 采光 · {light['hours']}h</span>", unsafe_allow_html=True)
             st.markdown(f"<span title='隔音等级'>{noise_icon(noise['level'])} {noise['level']} 隔音 · {noise['db']}dB</span>", unsafe_allow_html=True)
-        with cols[3]:
+
+        # 列4：风险标签和详情按钮
+        with cols[4]:
             st.markdown(risk_label_text)
             if st.button("📋 查看详情", key=f"detail_{h.id}", use_container_width=True):
                 go_to_detail(h.id)
@@ -381,6 +404,41 @@ def render_detail_page():
         </p>
     </div>
     """, unsafe_allow_html=True)
+
+    # ====================================
+    # 1.5. 房源图片画廊
+    # ====================================
+    images = get_house_images(house_id)
+    if images:
+        st.markdown('<p class="section-title">🖼️ 房源实拍</p>', unsafe_allow_html=True)
+
+        # 大图展示（第一张主图）
+        primary_path = images[0].image_path
+        if os.path.exists(primary_path):
+            st.image(primary_path, use_container_width=True)
+
+        # 缩略图行（最多展示10张）
+        if len(images) > 1:
+            num_cols = min(len(images), 5)
+            gallery_cols = st.columns(num_cols)
+            for i, img in enumerate(images[:num_cols]):
+                img_path = img.image_path
+                with gallery_cols[i]:
+                    if os.path.exists(img_path):
+                        st.image(img_path, use_container_width=True)
+
+            # 第二行缩略图（如果有6-10张）
+            if len(images) > 5:
+                num_cols2 = min(len(images) - 5, 5)
+                gallery_cols2 = st.columns(num_cols2)
+                for i, img in enumerate(images[5:10]):
+                    img_path = img.image_path
+                    with gallery_cols2[i]:
+                        if os.path.exists(img_path):
+                            st.image(img_path, use_container_width=True)
+            st.caption(f"共 {len(images)} 张图片")
+    else:
+        st.info("📷 暂无房源实拍图片，运行 `python fetch_images.py` 抓取")
 
     # ====================================
     # 2. 房源基本信息表格

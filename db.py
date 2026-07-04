@@ -46,9 +46,10 @@ class House(Base):
     source_url = Column(String(500), comment="房源来源链接")
     created_at = Column(DateTime, default=datetime.now, comment="入库时间")
 
-    # 关联：一个房源有多条评论和价格记录
+    # 关联：一个房源有多条评论、价格记录和图片
     reviews = relationship("Review", back_populates="house", cascade="all, delete-orphan")
     price_records = relationship("PriceHistory", back_populates="house", cascade="all, delete-orphan")
+    images = relationship("ListingImage", back_populates="house", cascade="all, delete-orphan")
 
 
 # ============================================================
@@ -95,6 +96,24 @@ class Landlord(Base):
     type = Column(String(20), comment="房东类型（一手房东/二房东/公寓托管/中介）")
     complaint_count = Column(Integer, default=0, comment="历史投诉次数")
     risk_tags = Column(String(200), comment="风险标签，逗号分隔")
+
+
+# ============================================================
+# 表5：房源图片表 listing_images
+# ============================================================
+class ListingImage(Base):
+    """房源图片表，存储从租房平台抓取的房源实拍图片路径"""
+    __tablename__ = "listing_images"
+
+    id = Column(Integer, primary_key=True, autoincrement=True, comment="图片唯一ID")
+    house_id = Column(Integer, ForeignKey("houses.id"), nullable=False, comment="关联房源ID")
+    image_path = Column(String(500), comment="本地图片相对路径，如 images/1/001.jpg")
+    source_url = Column(Text, comment="图片来源URL（原始链家/贝壳链接）")
+    sort_order = Column(Integer, default=0, comment="排序序号（1-10）")
+    is_primary = Column(Boolean, default=False, comment="是否为主图/封面")
+    created_at = Column(DateTime, default=datetime.now, comment="抓取时间")
+
+    house = relationship("House", back_populates="images")
 
 
 # ============================================================
@@ -205,3 +224,21 @@ def get_houses_by_landlord(phone_hash):
     houses = session.query(House).filter(House.landlord_phone_hash == phone_hash).all()
     session.close()
     return houses
+
+
+def get_house_images(house_id):
+    """
+    获取指定房源的所有图片，按排序序号升序排列
+
+    参数：
+        house_id: 房源ID
+
+    返回：
+        ListingImage 对象列表（按 sort_order 升序）
+    """
+    session = get_session()
+    images = session.query(ListingImage).filter(
+        ListingImage.house_id == house_id
+    ).order_by(ListingImage.sort_order).all()
+    session.close()
+    return images
