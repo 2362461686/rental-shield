@@ -1,16 +1,20 @@
 """数据库查询函数（接收 Session 参数，由路由层注入）"""
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from backend.db.models import House, Review, PriceHistory, Landlord, ListingImage
 
 
-def query_houses(db: Session, districts=None, layout=None, min_price=0, max_price=99999):
-    """房源列表查询，支持筛选"""
+def query_houses(db: Session, districts=None, layout=None, min_price=0, max_price=99999, keyword=None):
+    """房源列表查询，支持筛选和关键词搜索"""
     q = db.query(House)
     if districts:
         q = q.filter(House.district.in_(districts))
     if layout:
         q = q.filter(House.layout == layout)
     q = q.filter(House.price >= min_price, House.price <= max_price)
+    if keyword:
+        pattern = f"%{keyword}%"
+        q = q.filter(or_(House.title.like(pattern), House.community.like(pattern)))
     return q.all()
 
 

@@ -18,11 +18,12 @@ def list_houses(
     min_price: int = Query(0),
     max_price: int = Query(8000),
     sort_by: str = Query("综合推荐"),
+    keyword: Optional[str] = Query(None, description="关键词搜索（小区名、标题）"),
     db: Session = Depends(get_db),
 ):
     """房源列表查询，支持筛选和排序"""
     district_list = [d.strip() for d in districts.split(",") if d.strip()] if districts else None
-    return house_service.list_houses(db, district_list, layout, min_price, max_price, sort_by)
+    return house_service.list_houses(db, district_list, layout, min_price, max_price, sort_by, keyword)
 
 
 @router.get("/{house_id}", response_model=HouseDetail)

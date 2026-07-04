@@ -44,12 +44,17 @@ class House(Base):
     has_business_below = Column(Boolean, default=False, comment="是否有底商")
     landlord_phone_hash = Column(String(64), comment="房东手机号哈希，关联 landlords 表")
     source_url = Column(String(500), comment="房源来源链接")
+    latitude = Column(Float, nullable=True, comment="纬度")
+    longitude = Column(Float, nullable=True, comment="经度")
+    commute_duration = Column(Integer, nullable=True, comment="通勤时间（分钟）")
+    commute_score = Column(Float, nullable=True, comment="通勤评分（0-100）")
     created_at = Column(DateTime, default=datetime.now, comment="入库时间")
 
-    # 关联：一个房源有多条评论、价格记录和图片
+    # 关联：一个房源有多条评论、价格记录、图片和收藏
     reviews = relationship("Review", back_populates="house", cascade="all, delete-orphan")
     price_records = relationship("PriceHistory", back_populates="house", cascade="all, delete-orphan")
     images = relationship("ListingImage", back_populates="house", cascade="all, delete-orphan")
+    favorites = relationship("Favorite", back_populates="house", cascade="all, delete-orphan")
 
 
 # ============================================================
@@ -117,11 +122,62 @@ class ListingImage(Base):
 
 
 # ============================================================
+# 表6：区域信息表 districts
+# ============================================================
+class District(Base):
+    """区域表，存储各区的中心坐标和拼音"""
+    __tablename__ = "districts"
+
+    id = Column(Integer, primary_key=True, autoincrement=True, comment="区域唯一ID")
+    name = Column(String(20), nullable=False, unique=True, comment="区域名称")
+    center_lat = Column(Float, nullable=False, default=0.0, comment="区域中心纬度")
+    center_lng = Column(Float, nullable=False, default=0.0, comment="区域中心经度")
+    pinyin = Column(String(50), comment="拼音")
+    house_count = Column(Integer, default=0, comment="房源数量缓存")
+
+
+# ============================================================
+# 表7：工作地点配置表 workspace_configs
+# ============================================================
+class WorkspaceConfig(Base):
+    """工作地点配置表"""
+    __tablename__ = "workspace_configs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    workplace_name = Column(String(200))
+    workplace_lat = Column(Float, nullable=False)
+    workplace_lng = Column(Float, nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.now)
+
+
+# ============================================================
+# 表8：收藏表 favorites
+# ============================================================
+class Favorite(Base):
+    """收藏表，记录用户收藏的房源"""
+    __tablename__ = "favorites"
+
+    id = Column(Integer, primary_key=True, autoincrement=True, comment="收藏唯一ID")
+    house_id = Column(Integer, ForeignKey("houses.id"), nullable=False, comment="关联房源ID")
+    created_at = Column(DateTime, default=datetime.now, comment="收藏时间")
+    notes = Column(Text, nullable=True, comment="用户备注")
+
+    house = relationship("House", back_populates="favorites")
+
+
+# ============================================================
 # 数据库工具函数
 # ============================================================
 
-def init_db():
-    """初始化数据库，创建所有表（如果不存在则创建）"""
+def init_db(recreate=False):
+    """初始化数据库，创建所有表
+
+    Args:
+        recreate: 如果为 True，先删除所有表再重建（用于 schema 变更）
+    """
+    if recreate:
+        Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
 
 
@@ -130,7 +186,7 @@ def get_session():
     return SessionLocal()
 
 
-def get_houses_by_filter(districts=None, layout=None, min_price=0, max_price=99999):
+def get_houses_by_filter(districts=None, layout=None, min_price=0, max_price=99999, keyword=None):
     """
     根据筛选条件查询房源列表
 
@@ -139,6 +195,7 @@ def get_houses_by_filter(districts=None, layout=None, min_price=0, max_price=999
         layout: 户型筛选，如 "一室"。None 表示不限户型
         min_price: 最低月租
         max_price: 最高月租
+        keyword: 关键词搜索（匹配标题和小区名）
 
     返回：
         房源对象列表
@@ -156,6 +213,12 @@ def get_houses_by_filter(districts=None, layout=None, min_price=0, max_price=999
 
     # 价格范围筛选
     query = query.filter(House.price >= min_price, House.price <= max_price)
+
+    # 关键词搜索
+    if keyword:
+        pattern = f"%{keyword}%"
+        from sqlalchemy import or_
+        query = query.filter(or_(House.title.like(pattern), House.community.like(pattern)))
 
     results = query.all()
     session.close()

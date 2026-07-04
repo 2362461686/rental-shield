@@ -6,7 +6,7 @@ rental-shield 种子数据脚本
 import random
 import hashlib
 from datetime import datetime, timedelta
-from db import init_db, get_session, House, Review, PriceHistory, Landlord, ListingImage
+from db import init_db, get_session, House, Review, PriceHistory, Landlord, ListingImage, District
 import config
 
 random.seed(42)  # 固定随机种子，确保每次生成的数据一致
@@ -22,8 +22,22 @@ def generate_data():
     session = get_session()
 
     # 清空旧数据（如果存在）
-    for table in [PriceHistory, Review, ListingImage, House, Landlord]:
+    for table in [PriceHistory, Review, ListingImage, House, Landlord, District]:
         session.query(table).delete()
+    session.commit()
+
+    # ============================================================
+    # 0.5、插入区域数据
+    # ============================================================
+    for district_name, info in config.DISTRICT_COORDS.items():
+        d = District(
+            name=district_name,
+            center_lat=info["center_lat"],
+            center_lng=info["center_lng"],
+            pinyin=info["pinyin"],
+            house_count=0,  # 将在下方统计
+        )
+        session.add(d)
     session.commit()
 
     # ============================================================
@@ -134,6 +148,11 @@ def generate_data():
             # 房源标题
             title = f"{community}{layout}丨{orientation}向丨{'精装修' if random.random() > 0.3 else '简装'}丨近地铁"
 
+            # 经纬度：从配置中取基准坐标，加随机偏移避免地图标记重叠
+            base_lat, base_lng = config.COMMUNITY_COORDS.get(community, (23.13, 113.30))
+            lat = base_lat + random.uniform(-0.001, 0.001)
+            lng = base_lng + random.uniform(-0.001, 0.001)
+
             house = House(
                 id=house_id,
                 title=title,
@@ -152,6 +171,8 @@ def generate_data():
                 has_business_below=has_business_below,
                 landlord_phone_hash=landlord_phone_hash,
                 source_url=f"https://gz.lianjia.com/zufang/GZ{100000 + house_id}.html",
+                latitude=lat,
+                longitude=lng,
                 created_at=datetime.now() - timedelta(days=random.randint(1, 30)),
             )
             session.add(house)
@@ -263,20 +284,29 @@ def generate_data():
             ))
     session.commit()
 
+    # 更新区域房源数量
+    for district_name in config.DISTRICT_COORDS:
+        count = session.query(House).filter(House.district == district_name).count()
+        session.query(District).filter(District.name == district_name).update({"house_count": count})
+    session.commit()
+
     # 统计实际插入的数量
     actual_reviews = session.query(Review).count()
     actual_price_history = session.query(PriceHistory).count()
     actual_houses = session.query(House).count()
     actual_landlords = session.query(Landlord).count()
+    actual_districts = session.query(District).count()
     session.close()
-    print(f"✅ 种子数据生成完成！共插入 {actual_houses} 套房源、{actual_reviews} 条评论、{actual_price_history} 条价格历史、{actual_landlords} 位房东。")
+    print(f"✅ 种子数据生成完成！共插入 {actual_houses} 套房源、{actual_reviews} 条评论、{actual_price_history} 条价格历史、{actual_landlords} 位房东、{actual_districts} 个区域。")
 
 
 # ============================================================
 # 主入口
 # ============================================================
 if __name__ == "__main__":
-    print("🏠 rental-shield 数据初始化中...")
-    init_db()  # 确保表已创建
+    import sys
+    sys.stdout.reconfigure(encoding='utf-8')  # Windows 中文编码兼容
+    print("rental-shield 数据初始化中...")
+    init_db(recreate=True)  # 重建表结构（适配新 schema）
     generate_data()
-    print("🎉 全部数据已就绪！")
+    print("全部数据已就绪！")

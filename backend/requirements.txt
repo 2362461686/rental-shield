@@ -6,3 +6,4 @@ pymysql
 requests
 beautifulsoup4
 Pillow
+httpx

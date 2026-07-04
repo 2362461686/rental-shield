@@ -27,6 +27,9 @@
       <div class="detail-header">
         <div class="detail-breadcrumb">
           <button @click="goBack">&larr; 返回搜索</button>
+          <button class="fav-header-btn" :class="{ 'is-faved': favStore.isFavorited(Number(props.id)) }" @click="handleFavorite">
+            {{ favStore.isFavorited(Number(props.id)) ? '❤️ 已收藏' : '🤍 收藏' }}
+          </button>
         </div>
         <h2>{{ detailStore.house.title }}</h2>
         <div class="detail-header-meta">
@@ -38,6 +41,16 @@
           <span>{{ detailStore.house.layout }}</span>
           <span>{{ detailStore.house.area }}m&#178;</span>
         </div>
+      </div>
+
+      <!-- Location Mini Map -->
+      <div class="section" v-if="detailStore.house.latitude && detailStore.house.longitude">
+        <h3 class="section-title">位置地图</h3>
+        <HouseMap
+          mode="detail"
+          :house-detail="detailStore.house"
+          :workplace="houseStore.workspace.configured ? houseStore.workspace : null"
+        />
       </div>
 
       <!-- Image Gallery -->
@@ -132,7 +145,10 @@ import NoiseCard from '../components/analysis/NoiseCard.vue'
 import ReviewMiningCard from '../components/analysis/ReviewMiningCard.vue'
 import LandlordRiskCard from '../components/analysis/LandlordRiskCard.vue'
 import AdvicePanel from '../components/analysis/AdvicePanel.vue'
+import HouseMap from '../components/map/HouseMap.vue'
 import Spinner from '../components/ui/Spinner.vue'
+import { useFavoriteStore } from '../stores/favorites.js'
+import { useHouseStore } from '../stores/house.js'
 
 const props = defineProps({
   id: { type: [String, Number], required: true },
@@ -140,9 +156,12 @@ const props = defineProps({
 
 const router = useRouter()
 const detailStore = useDetailStore()
+const favStore = useFavoriteStore()
+const houseStore = useHouseStore()
 
 onMounted(() => {
   detailStore.load(props.id)
+  favStore.checkStatus(Number(props.id))
 })
 
 onBeforeUnmount(() => {
@@ -158,77 +177,18 @@ function formatPrice(price) {
   const num = Number(price)
   return isNaN(num) ? price : num.toLocaleString('zh-CN')
 }
+
+async function handleFavorite() {
+  await favStore.toggle(Number(props.id))
+}
 </script>
 
 <style scoped>
-.detail-page {
-  padding: 0;
-}
-
-.detail-skeleton {
-  padding: 0;
-}
-
-.detail-header {
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  color: #fff;
-  padding: 32px;
-  border-radius: var(--radius);
-  margin-bottom: 24px;
-  position: relative;
-}
-
-.detail-header h2 {
-  font-size: 26px;
-  margin-bottom: 12px;
-}
-
-.detail-breadcrumb {
-  margin-bottom: 16px;
-}
-
-.detail-breadcrumb button {
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-  border: none;
-  padding: 8px 18px;
-  border-radius: 20px;
-  font-size: 14px;
-  transition: background 0.2s;
-  cursor: pointer;
-}
-
-.detail-breadcrumb button:hover {
-  background: rgba(255, 255, 255, 0.35);
-}
-
-.detail-header-meta {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
-  font-size: 14px;
-  opacity: 0.9;
-}
-
-.detail-header-price {
-  font-size: 22px;
-  font-weight: 800;
-  margin-right: 8px;
-  opacity: 1;
-}
-
-.price-card {
-  max-width: 400px;
-}
+.detail-page { padding: 0; }
+.detail-skeleton { padding: 0; }
+.price-card { max-width: 360px; }
 
 @media (max-width: 768px) {
-  .detail-header {
-    padding: 20px;
-  }
-
-  .detail-header h2 {
-    font-size: 20px;
-  }
+  .detail-header h2 { font-size: 20px; }
 }
 </style>

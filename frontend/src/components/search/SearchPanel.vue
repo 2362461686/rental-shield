@@ -2,6 +2,19 @@
   <div class="search-panel">
     <h3>筛选条件</h3>
 
+    <!-- Keyword search -->
+    <div class="filter-group">
+      <label>关键词</label>
+      <input
+        v-model="localFilters.keyword"
+        type="text"
+        class="filter-input"
+        placeholder="搜索小区名、标题..."
+        @keyup.enter="handleSearch"
+        @input="syncToStore"
+      />
+    </div>
+
     <!-- District multi-select -->
     <div class="filter-group">
       <label>区域</label>
@@ -13,6 +26,9 @@
           @click="toggleDistrict(district)"
         >
           {{ district }}
+          <span v-if="districtCounts[district]" class="district-badge">
+            {{ districtCounts[district] }}
+          </span>
         </button>
       </div>
     </div>
@@ -80,6 +96,21 @@
       </div>
     </div>
 
+    <!-- Subway line filter -->
+    <div class="filter-group">
+      <label>地铁线路</label>
+      <select
+        v-model="localSubwayLine"
+        class="filter-select"
+        @change="selectSubwayLine"
+      >
+        <option value="">不限</option>
+        <option v-for="line in subwayLines" :key="line.name" :value="line.name">
+          {{ line.name }}
+        </option>
+      </select>
+    </div>
+
     <!-- Search button -->
     <button class="search-btn" @click="handleSearch">
       搜索房源
@@ -88,8 +119,9 @@
 </template>
 
 <script setup>
-import { reactive, watch } from 'vue'
+import { reactive, ref, watch, onMounted } from 'vue'
 import { useHouseStore } from '../../stores/house.js'
+import { fetchDistrictList, fetchSubwayLines } from '../../api/client.js'
 
 const emit = defineEmits(['search'])
 
@@ -97,13 +129,33 @@ const houseStore = useHouseStore()
 
 const districtOptions = ['天河', '海珠', '番禺', '越秀', '荔湾', '白云']
 const sortOptions = ['综合推荐', '价格从低到高', '价格从高到低', '光照最优', '隔音最优']
+const districtCounts = ref({})
+const subwayLines = ref([])
+const localSubwayLine = ref('')
 
 const localFilters = reactive({
+  keyword: houseStore.filters.keyword || '',
   districts: [...houseStore.filters.districts],
   layout: houseStore.filters.layout,
   minPrice: houseStore.filters.minPrice,
   maxPrice: houseStore.filters.maxPrice,
   sortBy: houseStore.filters.sortBy,
+})
+
+onMounted(async () => {
+  try {
+    const list = await fetchDistrictList()
+    list.forEach(item => {
+      districtCounts.value[item.district] = item.count
+    })
+  } catch (e) {
+    console.error('Failed to load district counts:', e)
+  }
+  try {
+    subwayLines.value = await fetchSubwayLines()
+  } catch (e) {
+    console.error('Failed to load subway lines:', e)
+  }
 })
 
 function isDistrictActive(district) {
@@ -125,6 +177,7 @@ function selectSort(sort) {
 }
 
 function syncToStore() {
+  houseStore.updateFilter('keyword', localFilters.keyword)
   houseStore.updateFilter('districts', [...localFilters.districts])
   houseStore.updateFilter('layout', localFilters.layout)
   houseStore.updateFilter('minPrice', localFilters.minPrice)
@@ -132,15 +185,20 @@ function syncToStore() {
   houseStore.updateFilter('sortBy', localFilters.sortBy)
 }
 
+function selectSubwayLine() {
+  houseStore.setSubwayLine(localSubwayLine.value)
+}
+
 function handleSearch() {
   syncToStore()
   emit('search')
 }
 
-// Sync store changes back to local (e.g. if filters reset elsewhere)
+// Sync store changes back to local
 watch(
   () => houseStore.filters,
   (filters) => {
+    localFilters.keyword = filters.keyword || ''
     localFilters.districts = [...filters.districts]
     localFilters.layout = filters.layout
     localFilters.minPrice = filters.minPrice
@@ -152,6 +210,13 @@ watch(
 </script>
 
 <style scoped>
+.filter-input {
+  width: 100%; padding: 10px 12px;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  font-size: 14px; outline: none; background: #fff; box-sizing: border-box;
+}
+.filter-input:focus { border-color: var(--accent); }
+
 .price-inputs {
   display: flex;
   align-items: center;
@@ -176,5 +241,23 @@ watch(
 .price-sep {
   color: var(--text-secondary);
   font-size: 14px;
+}
+
+.district-badge {
+  display: inline-block;
+  background: rgba(102, 126, 234, 0.15);
+  color: var(--accent);
+  padding: 0 5px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  margin-left: 4px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.filter-districts button.active .district-badge {
+  background: rgba(255, 255, 255, 0.35);
+  color: #fff;
 }
 </style>

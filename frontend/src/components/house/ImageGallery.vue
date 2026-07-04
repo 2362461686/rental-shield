@@ -50,19 +50,20 @@ const currentImageUrl = computed(() => {
 
 function getImageUrl(image) {
   if (!image) return ''
-  const raw = typeof image === 'string' ? image : image.url || image.path || ''
+  const raw = typeof image === 'string' ? image : image.image_path || image.url || image.path || ''
   if (!raw) return ''
 
-  // In production, use the path directly; in dev, prefix with /api/v1/images/
-  if (import.meta.env.PROD) {
-    return raw
-  }
+  // 标准化路径：反斜杠转正斜杠
+  const normalized = raw.replace(/\\/g, '/')
+  // 去掉可能重复的 images/ 前缀
+  const clean = normalized.replace(/^images\//, '')
+
   // If path starts with http, it's already a full URL
-  if (raw.startsWith('http://') || raw.startsWith('https://')) {
-    return raw
+  if (clean.startsWith('http://') || clean.startsWith('https://')) {
+    return clean
   }
-  // Prepend /api/v1/images/ for local dev paths
-  return `/api/v1/images/${raw.replace(/^\//, '')}`
+  // Prepend /api/v1/images/ for serving through backend
+  return `/api/v1/images/${clean}`
 }
 </script>
 

@@ -28,6 +28,20 @@ ORIENTATION_WEIGHTS = {"南": 1.0, "东南": 0.85, "西南": 0.85, "东": 0.6, "
 WINDOW_COEFFICIENTS = {"落地窗": 1.2, "普通窗": 1.0, "小窗": 0.8}
 BUILDING_NOISE = {"塔楼": 35, "板楼": 40, "自建房": 45}
 
+# 高德地图 API Key
+import os as _os
+AMAP_API_KEY = _os.environ.get("AMAP_API_KEY", "")
+
+# 广州各区中心坐标
+DISTRICT_COORDS = {
+    "天河": {"center_lat": 23.1250, "center_lng": 113.3612, "pinyin": "tianhe"},
+    "海珠": {"center_lat": 23.0830, "center_lng": 113.3172, "pinyin": "haizhu"},
+    "番禺": {"center_lat": 22.9380, "center_lng": 113.3545, "pinyin": "panyu"},
+    "越秀": {"center_lat": 23.1291, "center_lng": 113.2670, "pinyin": "yuexiu"},
+    "荔湾": {"center_lat": 23.1150, "center_lng": 113.2430, "pinyin": "liwan"},
+    "白云": {"center_lat": 23.1580, "center_lng": 113.2750, "pinyin": "baiyun"},
+}
+
 # 爬虫代理
 SCRAPER_PROXY = {"http": "http://127.0.0.1:7897", "https": "http://127.0.0.1:7897"}
 IMAGES_DIR = "../images"

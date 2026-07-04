@@ -6,9 +6,9 @@ from backend import config
 from backend import utils
 
 
-def list_houses(db: Session, districts=None, layout=None, min_price=0, max_price=99999, sort_by="综合推荐"):
+def list_houses(db: Session, districts=None, layout=None, min_price=0, max_price=99999, sort_by="综合推荐", keyword=None):
     """查询房源列表，附加光照/噪声/风险计算并排序"""
-    houses = queries.query_houses(db, districts, layout, min_price, max_price)
+    houses = queries.query_houses(db, districts, layout, min_price, max_price, keyword)
 
     results = []
     for h in houses:
@@ -61,6 +61,9 @@ def list_houses(db: Session, districts=None, layout=None, min_price=0, max_price
             noise_db=r["noise"]["db"], noise_level=r["noise"]["level"],
             risk_score=r["risk_score"], risk_label=r["risk_label"],
             primary_image_url=r["primary_img"],
+            review_count=len(h.reviews) if h.reviews else 0,
+            latitude=h.latitude, longitude=h.longitude,
+            commute_duration=h.commute_duration, commute_score=h.commute_score,
         ))
     return summaries
 
@@ -86,6 +89,7 @@ def get_house_detail(db: Session, house_id: int):
         building_type=h.building_type or "", building_year=h.building_year or 0,
         distance_to_street=h.distance_to_street or 0, has_business_below=h.has_business_below or False,
         landlord_phone_hash=h.landlord_phone_hash, source_url=h.source_url,
+        latitude=h.latitude, longitude=h.longitude,
         created_at=h.created_at,
         sunlight_hours=light["hours"], sunlight_level=light["level"],
         noise_db=noise["db"], noise_level=noise["level"],

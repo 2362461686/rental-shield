@@ -25,11 +25,16 @@ class House(Base):
     has_business_below = Column(Boolean, default=False)
     landlord_phone_hash = Column(String(64))
     source_url = Column(String(500))
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    commute_duration = Column(Integer, nullable=True)
+    commute_score = Column(Float, nullable=True)
     created_at = Column(DateTime, default=datetime.now)
 
     reviews = relationship("Review", back_populates="house", cascade="all, delete-orphan")
     price_records = relationship("PriceHistory", back_populates="house", cascade="all, delete-orphan")
     images = relationship("ListingImage", back_populates="house", cascade="all, delete-orphan")
+    favorites = relationship("Favorite", back_populates="house", cascade="all, delete-orphan")
 
 
 class Review(Base):
@@ -71,3 +76,32 @@ class ListingImage(Base):
     is_primary = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.now)
     house = relationship("House", back_populates="images")
+
+
+class District(Base):
+    __tablename__ = "districts"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(20), nullable=False, unique=True)
+    center_lat = Column(Float, nullable=False, default=0.0)
+    center_lng = Column(Float, nullable=False, default=0.0)
+    pinyin = Column(String(50))
+    house_count = Column(Integer, default=0)
+
+
+class WorkspaceConfig(Base):
+    __tablename__ = "workspace_configs"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    workplace_name = Column(String(200))
+    workplace_lat = Column(Float, nullable=False)
+    workplace_lng = Column(Float, nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.now)
+
+
+class Favorite(Base):
+    __tablename__ = "favorites"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    house_id = Column(Integer, ForeignKey("houses.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.now)
+    notes = Column(Text, nullable=True)
+    house = relationship("House", back_populates="favorites")

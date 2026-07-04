@@ -7,6 +7,7 @@ const routes = [
   { path: '/', name: 'home', component: HomeView },
   { path: '/search', name: 'search', component: SearchView },
   { path: '/house/:id', name: 'detail', component: DetailView, props: true },
+  { path: '/favorites', name: 'favorites', component: () => import('../views/FavoritesView.vue') },
 ]
 
 export default createRouter({

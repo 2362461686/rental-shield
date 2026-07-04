@@ -13,10 +13,10 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(_
 
 @router.get("/{image_path:path}")
 def serve_image(image_path: str):
-    """提供图片文件（支持相对路径）"""
-    full_path = os.path.join(PROJECT_ROOT, image_path)
+    """提供图片文件（路径相对于 images/ 目录）"""
+    full_path = os.path.join(PROJECT_ROOT, "images", image_path)
     if not os.path.exists(full_path):
-        raise HTTPException(status_code=404, detail="图片不存在")
+        raise HTTPException(status_code=404, detail=f"图片不存在: {image_path}")
     return FileResponse(full_path)
 
 

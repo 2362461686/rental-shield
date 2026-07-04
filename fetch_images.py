@@ -433,6 +433,9 @@ def fetch_all_images(house_ids=None, max_per_house=None, min_per_house=None):
 # 命令行入口
 # ============================================================
 def main():
+    import sys as _sys
+    if hasattr(_sys.stdout, 'reconfigure'):
+        _sys.stdout.reconfigure(encoding='utf-8')
     parser = argparse.ArgumentParser(description="rental-shield 房源图片抓取脚本")
     parser.add_argument("--house-ids", type=str, default=None,
                         help="指定房源ID，逗号分隔（默认抓取全部），如 1,3,5,10")
