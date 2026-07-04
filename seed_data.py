@@ -263,8 +263,13 @@ def generate_data():
             ))
     session.commit()
 
+    # 统计实际插入的数量
+    actual_reviews = session.query(Review).count()
+    actual_price_history = session.query(PriceHistory).count()
+    actual_houses = session.query(House).count()
+    actual_landlords = session.query(Landlord).count()
     session.close()
-    print(f"✅ 种子数据生成完成！共插入 {len(houses_records)} 套房源、{sum(2 + random.randint(0, 2) for _ in houses_records)} 条评论及对应价格历史。")
+    print(f"✅ 种子数据生成完成！共插入 {actual_houses} 套房源、{actual_reviews} 条评论、{actual_price_history} 条价格历史、{actual_landlords} 位房东。")
 
 
 # ============================================================
