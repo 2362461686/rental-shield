@@ -29,6 +29,11 @@
         </div>
       </div>
 
+      <!-- 主 CTA 按钮 -->
+      <div class="hero-cta">
+        <button class="btn-start-assess" @click="$router.push('/assess/new')">开始房源体检</button>
+      </div>
+
       <div class="hero-stats">
         <div class="hero-stat"><strong>50+</strong> 房源</div>
         <div class="hero-stat"><strong>6</strong> 个区域</div>
@@ -201,6 +206,17 @@ function selectLine(line) {
   border-color: rgba(245,158,11,0.3);
 }
 .import-icon { font-size: 18px; }
+
+/* ===== Hero CTA ===== */
+.hero-cta { margin-top: 28px; }
+.btn-start-assess {
+  display: inline-block; padding: 14px 48px;
+  background: var(--primary-gradient); color: #fff; border: none;
+  border-radius: var(--radius-xl); font-size: 17px; font-weight: 700;
+  cursor: pointer; transition: transform .2s, box-shadow .2s;
+  box-shadow: 0 4px 20px rgba(245,158,11,0.3);
+}
+.btn-start-assess:hover { transform: scale(1.04); box-shadow: 0 6px 28px rgba(245,158,11,0.4); }
 
 .hero-stats {
   display: flex; justify-content: center; gap: 40px; margin-top: 36px;

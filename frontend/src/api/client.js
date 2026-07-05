@@ -46,6 +46,9 @@ export const fetchFavorites = () => api.get('/favorites')
 export const toggleFavorite = (houseId) => api.post(`/favorites/${houseId}`)
 export const checkFavorite = (houseId) => api.get(`/favorites/check/${houseId}`)
 
+// --- Assessments ---
+export const createAssessment = (data) => api.post('/assessments', data)
+
 // --- Agents ---
 export const runReviewMining = (id) => api.post(`/agents/review-mining/${id}`)
 export const runLandlordRisk = (hash) => api.post(`/agents/landlord-risk/${encodeURIComponent(hash)}`)

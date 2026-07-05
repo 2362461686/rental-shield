@@ -13,7 +13,7 @@ from fastapi.responses import FileResponse
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PROJECT_ROOT)
 
-from backend.routers import houses, analysis, agent_routes, images, districts, commute, favorites, subway
+from backend.routers import houses, analysis, agent_routes, images, districts, commute, favorites, subway, assessments
 
 app = FastAPI(title="Rental-Shield API", version="1.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
@@ -27,6 +27,7 @@ app.include_router(districts.router)
 app.include_router(commute.router)
 app.include_router(favorites.router)
 app.include_router(subway.router)
+app.include_router(assessments.router)
 
 
 @app.get("/api/v1/health")

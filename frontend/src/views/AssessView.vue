@@ -146,16 +146,19 @@
           </div>
         </fieldset>
 
-        <!-- 提交按钮 -->
-        <div class="form-actions">
-          <button type="button" class="btn-reset" @click="handleReset">重置</button>
-          <button type="submit" class="btn-submit">提交评估</button>
+        <!-- 错误提示 -->
+        <div v-if="errorMessage" class="assess-error">
+          <span class="error-icon">&#x26A0;</span>
+          <span>{{ errorMessage }}</span>
         </div>
 
-        <!-- 提交后的 payload 展示 -->
-        <div v-if="submittedPayload" class="payload-display">
-          <h3>提交的 Payload（前端打印，未接后端）</h3>
-          <pre>{{ submittedPayload }}</pre>
+        <!-- 提交按钮 -->
+        <div class="form-actions">
+          <button type="button" class="btn-reset" @click="handleReset" :disabled="submitting">重置</button>
+          <button type="submit" class="btn-submit" :disabled="submitting">
+            <span v-if="submitting" class="spinner"></span>
+            {{ submitting ? '提交中…' : '提交评估' }}
+          </button>
         </div>
       </form>
     </div>
@@ -164,6 +167,10 @@
 
 <script setup>
 import { reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { createAssessment } from '../api/client.js'
+
+const router = useRouter()
 
 const form = reactive({
   title: '',
@@ -182,31 +189,66 @@ const form = reactive({
   review_text: '',
 })
 
-const submittedPayload = ref(null)
+const submitting = ref(false)
+const errorMessage = ref('')
+
+function toNum(v) {
+  if (v === null || v === undefined || v === '') return undefined
+  const n = Number(v)
+  return Number.isNaN(n) ? undefined : n
+}
 
 function buildPayload() {
   const p = {}
   if (form.title) p.title = form.title
-  if (form.url) p.url = form.url
+  if (form.url) p.source_url = form.url
   if (form.community) p.community = form.community
   if (form.district) p.district = form.district
-  if (form.rent !== null) p.rent = form.rent
+  if (form.rent !== null && form.rent !== '') p.price = toNum(form.rent)
   if (form.layout) p.layout = form.layout
-  if (form.area !== null) p.area = form.area
-  if (form.floor) p.floor = form.floor
-  if (form.total_floors) p.total_floors = form.total_floors
+  if (form.area !== null && form.area !== '') p.area = toNum(form.area)
+  if (form.floor !== undefined && form.floor !== '') p.floor = toNum(form.floor)
+  if (form.total_floors !== undefined && form.total_floors !== '') p.total_floors = toNum(form.total_floors)
   if (form.orientation) p.orientation = form.orientation
-  if (form.street_facing !== null) p.street_facing = form.street_facing
-  if (form.ground_floor_shop !== null) p.ground_floor_shop = form.ground_floor_shop
+
+  // street_facing → distance_to_street: 临街=20, 不临街=200, 未选=null
+  if (form.street_facing === true) p.distance_to_street = 20
+  else if (form.street_facing === false) p.distance_to_street = 200
+
+  // ground_floor_shop → has_business_below
+  if (form.ground_floor_shop !== null) p.has_business_below = form.ground_floor_shop
+
   if (form.commute_destination) p.commute_destination = form.commute_destination
-  if (form.review_text) p.review_text = form.review_text
+
+  // review_text → reviews 数组
+  if (form.review_text) {
+    p.reviews = [{ platform: 'user_input', content: form.review_text }]
+  }
+
   return p
 }
 
-function handleSubmit() {
-  const payload = buildPayload()
-  submittedPayload.value = JSON.stringify(payload, null, 2)
-  console.log('[AssessView] 提交的 payload:', payload)
+async function handleSubmit() {
+  errorMessage.value = ''
+  submitting.value = true
+
+  try {
+    const payload = buildPayload()
+    const result = await createAssessment(payload)
+    // result = { house_id, detail_url, message }
+    router.push(result.detail_url)
+  } catch (err) {
+    const detail = err?.response?.data?.detail
+    if (Array.isArray(detail)) {
+      errorMessage.value = detail.map((d) => d.msg).join('；')
+    } else if (typeof detail === 'string') {
+      errorMessage.value = detail
+    } else {
+      errorMessage.value = err.message || '提交失败，请稍后重试'
+    }
+  } finally {
+    submitting.value = false
+  }
 }
 
 function handleReset() {
@@ -216,7 +258,7 @@ function handleReset() {
     orientation: '', street_facing: null, ground_floor_shop: null,
     commute_destination: '', review_text: '',
   })
-  submittedPayload.value = null
+  errorMessage.value = ''
 }
 </script>
 
@@ -323,20 +365,28 @@ function handleReset() {
 }
 .btn-submit:hover { transform: scale(1.02); box-shadow: 0 4px 16px rgba(245,158,11,0.35); }
 
-/* ===== Payload Display ===== */
-.payload-display {
-  margin-top: 28px; padding: 20px 24px;
-  background: #F9FAFB; border-radius: var(--radius-sm);
-  border: 1px solid var(--border-strong);
+/* ===== Error Message ===== */
+.assess-error {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 14px 18px; margin-bottom: 8px;
+  background: #FEF2F2; border: 1px solid #FECACA;
+  border-radius: var(--radius-sm); color: #991B1B;
+  font-size: 14px; line-height: 1.6;
 }
-.payload-display h3 {
-  font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 12px;
+.error-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+/* ===== Spinner ===== */
+.spinner {
+  display: inline-block; width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff; border-radius: 50%;
+  animation: spin .6s linear infinite;
+  margin-right: 8px; vertical-align: middle;
 }
-.payload-display pre {
-  font-size: 13px; font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
-  line-height: 1.7; color: var(--text); white-space: pre-wrap;
-  overflow-x: auto;
-}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.btn-submit:disabled,
+.btn-reset:disabled { opacity: 0.6; cursor: not-allowed; }
 
 @media (max-width: 768px) {
   .assess-hero { padding: 36px 20px 44px; }
