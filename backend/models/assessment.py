@@ -25,3 +25,9 @@ class AssessmentRequest(BaseModel):
     has_business_below: Optional[bool] = None
     commute_destination: Optional[str] = None
     reviews: Optional[list[ReviewItem]] = None
+
+
+class ReviewAddRequest(BaseModel):
+    """补充评价请求体"""
+    content: str = ""
+    platform: str = "user_input"

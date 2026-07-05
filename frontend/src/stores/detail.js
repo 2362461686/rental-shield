@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import {
   fetchHouseDetail, fetchReviews, fetchImages,
   runReviewMining, runLandlordRisk, runFinalAdvice,
-  analyzeReviews,
+  analyzeReviews, addReview,
 } from '../api/client.js'
 
 export const useDetailStore = defineStore('detail', {
@@ -61,6 +61,22 @@ export const useDetailStore = defineStore('detail', {
         this.finalAdvice = await runFinalAdvice(houseId).catch(() => null)
       } finally {
         this.loading.ai = false
+      }
+    },
+
+    async addReviewAndRefresh(houseId, content) {
+      await addReview(houseId, { content })
+      // 重新加载评论列表和分析结果
+      this.loading.assessment = true
+      try {
+        const [reviews, assessment] = await Promise.all([
+          fetchReviews(houseId).catch(() => []),
+          analyzeReviews(houseId).catch(() => null),
+        ])
+        this.reviews = reviews
+        this.assessment = assessment
+      } finally {
+        this.loading.assessment = false
       }
     },
 

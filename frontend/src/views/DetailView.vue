@@ -111,6 +111,33 @@
         />
       </div>
 
+      <!-- 补充评价 -->
+      <div class="section">
+        <h3 class="section-title">补充评价</h3>
+        <div class="review-add-box">
+          <textarea
+            v-model="reviewContent"
+            class="review-textarea"
+            rows="4"
+            placeholder="输入你的看房体验或租住感受，补充评价后风险分析会自动更新…"
+            :disabled="reviewSubmitting"
+          ></textarea>
+          <div class="review-add-footer">
+            <div v-if="reviewError" class="review-msg review-msg-error">{{ reviewError }}</div>
+            <div v-else-if="reviewSuccess" class="review-msg review-msg-success">评价已添加，分析已更新</div>
+            <div v-else class="review-msg"></div>
+            <button
+              class="btn-add-review"
+              :disabled="reviewSubmitting || !reviewContent.trim()"
+              @click="handleAddReview"
+            >
+              <span v-if="reviewSubmitting" class="spinner-inline"></span>
+              {{ reviewSubmitting ? '提交中…' : '提交评价' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- AI Analysis Sections -->
       <template v-if="detailStore.loading.ai">
         <div class="loading">
@@ -144,7 +171,7 @@
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount } from 'vue'
+import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDetailStore } from '../stores/detail.js'
 import ImageGallery from '../components/house/ImageGallery.vue'
@@ -168,6 +195,30 @@ const router = useRouter()
 const detailStore = useDetailStore()
 const favStore = useFavoriteStore()
 const houseStore = useHouseStore()
+
+// ── 补充评价 ──
+const reviewContent = ref('')
+const reviewSubmitting = ref(false)
+const reviewError = ref('')
+const reviewSuccess = ref(false)
+
+async function handleAddReview() {
+  const text = reviewContent.value.trim()
+  if (!text) return
+  reviewError.value = ''
+  reviewSuccess.value = false
+  reviewSubmitting.value = true
+  try {
+    await detailStore.addReviewAndRefresh(props.id, text)
+    reviewContent.value = ''
+    reviewSuccess.value = true
+    setTimeout(() => { reviewSuccess.value = false }, 3000)
+  } catch (err) {
+    reviewError.value = err?.response?.data?.detail || err.message || '提交失败'
+  } finally {
+    reviewSubmitting.value = false
+  }
+}
 
 onMounted(() => {
   detailStore.load(props.id)
@@ -197,6 +248,53 @@ async function handleFavorite() {
 .detail-page { padding: 0; }
 .detail-skeleton { padding: 0; }
 .price-card { max-width: 360px; }
+
+/* ── 补充评价 ── */
+.review-add-box {
+  background: #fff; border-radius: var(--radius); padding: 20px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+.review-textarea {
+  width: 100%; padding: 12px 14px; border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius-xs); font-size: 14px; outline: none;
+  background: #fff; color: var(--text); font-family: inherit;
+  resize: vertical; min-height: 80px; line-height: 1.7;
+  transition: border-color .2s, box-shadow .2s;
+  box-sizing: border-box;
+}
+.review-textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(245,158,11,0.1);
+}
+.review-textarea:disabled { background: #F9FAFB; }
+.review-textarea::placeholder { color: var(--text-muted); font-size: 13px; }
+
+.review-add-footer {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 12px; gap: 12px;
+}
+.review-msg { font-size: 13px; flex: 1; }
+.review-msg-error { color: #991B1B; }
+.review-msg-success { color: #065F46; }
+
+.btn-add-review {
+  padding: 10px 28px; border: none; border-radius: var(--radius-sm);
+  background: var(--primary-gradient); color: #fff;
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  transition: transform .15s, box-shadow .2s;
+  white-space: nowrap; flex-shrink: 0;
+}
+.btn-add-review:hover:not(:disabled) { transform: scale(1.02); box-shadow: 0 4px 16px rgba(245,158,11,0.35); }
+.btn-add-review:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.spinner-inline {
+  display: inline-block; width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff; border-radius: 50%;
+  animation: rspin .6s linear infinite;
+  margin-right: 6px; vertical-align: middle;
+}
+@keyframes rspin { to { transform: rotate(360deg); } }
 
 @media (max-width: 768px) {
   .detail-header h2 { font-size: 20px; }

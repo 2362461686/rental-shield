@@ -3,7 +3,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from backend.db.models import House, Review
-from backend.models.assessment import AssessmentRequest
+from backend.models.assessment import AssessmentRequest, ReviewAddRequest
 
 
 def _has_content(val: Optional[str]) -> bool:
@@ -86,4 +86,33 @@ def create_assessment(db: Session, payload: AssessmentRequest) -> dict:
         "house_id": house.id,
         "detail_url": f"/house/{house.id}",
         "message": f"评估创建成功，已保存 {review_count} 条评价",
+    }
+
+
+def add_review(db: Session, house_id: int, payload: ReviewAddRequest) -> dict:
+    """给已有房源补充一条评价
+
+    返回 dict: { review_id, house_id, message }
+    """
+    content = (payload.content or "").strip()
+    if not content:
+        raise ValueError("评价内容不能为空")
+
+    try:
+        review = Review(
+            house_id=house_id,
+            platform=payload.platform or "user_input",
+            content=content,
+        )
+        db.add(review)
+        db.commit()
+        db.refresh(review)
+    except Exception:
+        db.rollback()
+        raise
+
+    return {
+        "review_id": review.id,
+        "house_id": house_id,
+        "message": "评价已添加",
     }

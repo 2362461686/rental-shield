@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from backend.db.database import get_db
 from backend.db import queries
-from backend.models.assessment import AssessmentRequest
+from backend.models.assessment import AssessmentRequest, ReviewAddRequest
 from backend.services import assessment_service, review_analysis_service
 
 router = APIRouter(prefix="/api/v1/assessments", tags=["assessments"])
@@ -26,3 +26,15 @@ def analyze_reviews(house_id: int, db: Session = Depends(get_db)):
     if not house:
         raise HTTPException(status_code=404, detail="房源不存在")
     return review_analysis_service.analyze_reviews(db, house_id)
+
+
+@router.post("/{house_id}/reviews", status_code=201)
+def add_review(house_id: int, payload: ReviewAddRequest, db: Session = Depends(get_db)):
+    """给已有房源补充一条评价"""
+    house = queries.get_house(db, house_id)
+    if not house:
+        raise HTTPException(status_code=404, detail="房源不存在")
+    try:
+        return assessment_service.add_review(db, house_id, payload)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

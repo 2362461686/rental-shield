@@ -49,6 +49,7 @@ export const checkFavorite = (houseId) => api.get(`/favorites/check/${houseId}`)
 // --- Assessments ---
 export const createAssessment = (data) => api.post('/assessments', data)
 export const analyzeReviews = (houseId) => api.post(`/assessments/${houseId}/analyze-reviews`)
+export const addReview = (houseId, data) => api.post(`/assessments/${houseId}/reviews`, { content: data.content, platform: 'user_input' })
 
 // --- Agents ---
 export const runReviewMining = (id) => api.post(`/agents/review-mining/${id}`)
