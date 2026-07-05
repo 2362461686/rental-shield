@@ -102,6 +102,15 @@
         </div>
       </div>
 
+      <!-- 评论风险分析 -->
+      <div class="section">
+        <h3 class="section-title">评论风险分析</h3>
+        <AssessmentReport
+          :assessment="detailStore.assessment"
+          :loading="detailStore.loading.assessment"
+        />
+      </div>
+
       <!-- AI Analysis Sections -->
       <template v-if="detailStore.loading.ai">
         <div class="loading">
@@ -145,6 +154,7 @@ import NoiseCard from '../components/analysis/NoiseCard.vue'
 import ReviewMiningCard from '../components/analysis/ReviewMiningCard.vue'
 import LandlordRiskCard from '../components/analysis/LandlordRiskCard.vue'
 import AdvicePanel from '../components/analysis/AdvicePanel.vue'
+import AssessmentReport from '../components/analysis/AssessmentReport.vue'
 import HouseMap from '../components/map/HouseMap.vue'
 import Spinner from '../components/ui/Spinner.vue'
 import { useFavoriteStore } from '../stores/favorites.js'

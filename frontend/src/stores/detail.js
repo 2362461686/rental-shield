@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import {
   fetchHouseDetail, fetchReviews, fetchImages,
   runReviewMining, runLandlordRisk, runFinalAdvice,
+  analyzeReviews,
 } from '../api/client.js'
 
 export const useDetailStore = defineStore('detail', {
@@ -12,7 +13,8 @@ export const useDetailStore = defineStore('detail', {
     reviewMining: null,
     landlordRisk: null,
     finalAdvice: null,
-    loading: { house: false, reviews: false, images: false, ai: false },
+    assessment: null,
+    loading: { house: false, reviews: false, images: false, ai: false, assessment: false },
     errors: {},
   }),
 
@@ -21,20 +23,23 @@ export const useDetailStore = defineStore('detail', {
       // Reset
       this.house = null; this.reviews = []; this.images = []
       this.reviewMining = null; this.landlordRisk = null; this.finalAdvice = null
+      this.assessment = null
 
-      // Phase 1: Load fast data in parallel
-      this.loading.house = this.loading.reviews = this.loading.images = true
+      // Phase 1: Load fast data + assessment in parallel
+      this.loading.house = this.loading.reviews = this.loading.images = this.loading.assessment = true
       try {
-        const [house, reviews, images] = await Promise.all([
+        const [house, reviews, images, assessment] = await Promise.all([
           fetchHouseDetail(houseId).catch(e => { this.errors.house = e.message; return null }),
           fetchReviews(houseId).catch(e => { this.errors.reviews = e.message; return [] }),
           fetchImages(houseId).catch(e => { this.errors.images = e.message; return [] }),
+          analyzeReviews(houseId).catch(() => null),
         ])
         this.house = house
         this.reviews = reviews
         this.images = images
+        this.assessment = assessment
       } finally {
-        this.loading.house = this.loading.reviews = this.loading.images = false
+        this.loading.house = this.loading.reviews = this.loading.images = this.loading.assessment = false
       }
 
       if (!this.house) return
@@ -49,7 +54,6 @@ export const useDetailStore = defineStore('detail', {
           phoneHash ? runLandlordRisk(phoneHash).catch(() => null) : Promise.resolve(null),
         ]
 
-        // Start final advice immediately (it's independent)
         const [mining, landlord] = await Promise.all(promises)
         this.reviewMining = mining
         this.landlordRisk = landlord || { risk_level: '未知', risk_items: [], summary: '无法加载' }
@@ -63,6 +67,7 @@ export const useDetailStore = defineStore('detail', {
     clear() {
       this.house = null; this.reviews = []; this.images = []
       this.reviewMining = null; this.landlordRisk = null; this.finalAdvice = null
+      this.assessment = null
     },
   },
 })
