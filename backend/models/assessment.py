@@ -31,3 +31,8 @@ class ReviewAddRequest(BaseModel):
     """补充评价请求体"""
     content: str = ""
     platform: str = "user_input"
+
+
+class ScrapeRequest(BaseModel):
+    """URL 抓取请求"""
+    url: str

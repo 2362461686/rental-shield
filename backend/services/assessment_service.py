@@ -3,7 +3,11 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from backend.db.models import House, Review
-from backend.models.assessment import AssessmentRequest, ReviewAddRequest
+import re
+import requests
+from bs4 import BeautifulSoup
+
+from backend.models.assessment import AssessmentRequest, ReviewAddRequest, ScrapeRequest
 
 
 def _has_content(val: Optional[str]) -> bool:
@@ -116,3 +120,85 @@ def add_review(db: Session, house_id: int, payload: ReviewAddRequest) -> dict:
         "house_id": house_id,
         "message": "评价已添加",
     }
+
+
+def scrape_listing(payload: ScrapeRequest) -> dict:
+    """抓取房源链接，提取房屋信息
+
+    返回 dict: { url, community, district, price, layout, area, ... }
+    抓取失败返回 { url, error }
+    """
+    url = payload.url.strip()
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                          "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+        }
+        resp = requests.get(url, headers=headers, timeout=15)
+        resp.encoding = resp.apparent_encoding or "utf-8"
+        soup = BeautifulSoup(resp.text, "html.parser")
+
+        result = {"url": url}
+        text = soup.get_text()
+
+        # ── 小区名 ──
+        community = None
+        for meta in soup.find_all("meta"):
+            name = meta.get("name", "") or meta.get("property", "")
+            content = meta.get("content", "")
+            if "小区" in name or "community" in name.lower():
+                community = content.strip()
+                break
+        if not community:
+            m = re.search(r"(?:小区|花园|家园|新村|新苑)[：:\s]*([\u4e00-\u9fa5a-zA-Z0-9·\-]+)", text)
+            if m: community = m.group(0).strip()
+        if community:
+            result["community"] = community
+
+        # ── 租金 ──
+        m = re.search(r"(\d{3,5})\s*元/月", text)
+        if m: result["price"] = int(m.group(1))
+
+        # ── 户型 ──
+        m = re.search(r"(\d室\d厅)", text)
+        if m: result["layout"] = m.group(1)
+
+        # ── 面积 ──
+        m = re.search(r"(\d{2,3})\s*[㎡平米]", text)
+        if m: result["area"] = float(m.group(1))
+
+        # ── 楼层 ──
+        m = re.search(r"(?:共(\d+)层|(\d+)/(\d+)层|(\d+)层)", text)
+        if m:
+            nums = [g for g in m.groups() if g]
+            if len(nums) >= 2:
+                result["floor"] = nums[0]
+                result["total_floors"] = nums[1]
+            elif len(nums) == 1:
+                result["floor"] = nums[0]
+
+        # ── 朝向 ──
+        for kw in ["南", "南北", "东南", "西南", "东", "西", "北"]:
+            if kw in text:
+                result["orientation"] = kw
+                break
+
+        # ── 区域 ──
+        for district in ["天河", "海珠", "番禺", "越秀", "荔湾", "白云"]:
+            if district in text:
+                result["district"] = district
+                break
+
+        # ── 页面标题 ──
+        title_tag = soup.find("title")
+        if title_tag:
+            result["title"] = title_tag.get_text(strip=True)
+
+        return result
+
+    except requests.RequestException:
+        return {"url": url, "error": "无法访问该链接，请检查 URL 是否正确"}
+    except Exception:
+        return {"url": url, "error": "页面解析失败，请手动填写信息"}

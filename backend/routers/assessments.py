@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from backend.db.database import get_db
 from backend.db import queries
-from backend.models.assessment import AssessmentRequest, ReviewAddRequest
+from backend.models.assessment import AssessmentRequest, ReviewAddRequest, ScrapeRequest
 from backend.services import assessment_service, review_analysis_service
 
 router = APIRouter(prefix="/api/v1/assessments", tags=["assessments"])
@@ -38,3 +38,12 @@ def add_review(house_id: int, payload: ReviewAddRequest, db: Session = Depends(g
         return assessment_service.add_review(db, house_id, payload)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/scrape")
+def scrape_url(payload: ScrapeRequest):
+    """抓取房源链接，提取房屋基本信息（小区名、租金、户型、面积等）"""
+    result = assessment_service.scrape_listing(payload)
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result

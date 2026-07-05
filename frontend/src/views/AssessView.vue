@@ -1,166 +1,155 @@
 <template>
-  <div class="assess-view">
-    <!-- 页面标题 -->
-    <section class="assess-hero">
-      <h1>新建租房<span>评估</span></h1>
-      <p>填写房源信息，AI 帮你做一次全面的风险体检</p>
+  <div class="assess-new">
+    <!-- Hero -->
+    <section class="an-hero">
+      <div class="an-hero-badge">AI 风险评估</div>
+      <h1>输入房源信息，<span>AI 帮你判别风险</span></h1>
+      <p>粘贴 58 / 贝壳链接自动抓取房屋信息，或手动填写 → AI 综合分析 → 生成风险报告</p>
     </section>
 
-    <!-- 表单区域 -->
-    <div class="assess-form-wrapper">
-      <form class="assess-form" @submit.prevent="handleSubmit">
-
-        <!-- 一、基本信息 -->
-        <fieldset class="form-section">
-          <legend class="form-section-title">基本信息</legend>
-
-          <div class="form-group form-group-full">
-            <label>房源标题 <span class="optional">（选填）</span></label>
-            <input v-model="form.title" type="text" placeholder="如：天河区骏景花园精装三房 近BRT" />
-          </div>
-
-          <div class="form-group form-group-full">
-            <label>房源链接 <span class="optional">（选填）</span></label>
-            <input v-model="form.url" type="url" placeholder="如：https://gz.58.com/zufang/..." />
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>小区名</label>
-              <input v-model="form.community" type="text" placeholder="如：骏景花园" />
-            </div>
-            <div class="form-group">
-              <label>区域</label>
-              <select v-model="form.district">
-                <option value="">请选择</option>
-                <option value="天河">天河</option>
-                <option value="海珠">海珠</option>
-                <option value="番禺">番禺</option>
-                <option value="越秀">越秀</option>
-                <option value="荔湾">荔湾</option>
-                <option value="白云">白云</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>月租（元）</label>
-              <input v-model.number="form.rent" type="number" placeholder="如：2800" min="0" />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>户型</label>
-              <select v-model="form.layout">
-                <option value="">请选择</option>
-                <option value="1室0厅">1室0厅</option>
-                <option value="1室1厅">1室1厅</option>
-                <option value="2室1厅">2室1厅</option>
-                <option value="2室2厅">2室2厅</option>
-                <option value="3室1厅">3室1厅</option>
-                <option value="3室2厅">3室2厅</option>
-                <option value="4室2厅">4室2厅</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>面积（㎡）</label>
-              <input v-model.number="form.area" type="number" placeholder="如：85" min="0" />
-            </div>
-            <div class="form-group">
-              <label>楼层</label>
-              <input v-model="form.floor" type="text" placeholder="如：12" />
-            </div>
-            <div class="form-group">
-              <label>总楼层</label>
-              <input v-model="form.total_floors" type="text" placeholder="如：30" />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>朝向</label>
-              <select v-model="form.orientation">
-                <option value="">请选择</option>
-                <option value="东">东</option>
-                <option value="南">南</option>
-                <option value="西">西</option>
-                <option value="北">北</option>
-                <option value="东南">东南</option>
-                <option value="西南">西南</option>
-                <option value="东北">东北</option>
-                <option value="西北">西北</option>
-                <option value="南北">南北</option>
-              </select>
-            </div>
-          </div>
-        </fieldset>
-
-        <!-- 二、环境因素 -->
-        <fieldset class="form-section">
-          <legend class="form-section-title">环境因素</legend>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>是否临街</label>
-              <div class="radio-group">
-                <label class="radio-option">
-                  <input v-model="form.street_facing" type="radio" :value="true" />
-                  <span class="radio-label">是</span>
-                </label>
-                <label class="radio-option">
-                  <input v-model="form.street_facing" type="radio" :value="false" />
-                  <span class="radio-label">否</span>
-                </label>
-              </div>
-            </div>
-            <div class="form-group">
-              <label>是否楼下商铺</label>
-              <div class="radio-group">
-                <label class="radio-option">
-                  <input v-model="form.ground_floor_shop" type="radio" :value="true" />
-                  <span class="radio-label">是</span>
-                </label>
-                <label class="radio-option">
-                  <input v-model="form.ground_floor_shop" type="radio" :value="false" />
-                  <span class="radio-label">否</span>
-                </label>
-              </div>
-            </div>
-          </div>
-        </fieldset>
-
-        <!-- 三、通勤信息 -->
-        <fieldset class="form-section">
-          <legend class="form-section-title">通勤信息</legend>
-          <div class="form-group form-group-full">
-            <label>通勤目的地 <span class="optional">（选填）</span></label>
-            <input v-model="form.commute_destination" type="text" placeholder="如：天河区体育西路地铁站" />
-          </div>
-        </fieldset>
-
-        <!-- 四、评价文本 -->
-        <fieldset class="form-section">
-          <legend class="form-section-title">评价文本</legend>
-          <div class="form-group form-group-full">
-            <label>租客评价 / 看房笔记 <span class="optional">（选填）</span></label>
-            <textarea v-model="form.review_text" rows="6" placeholder="粘贴你在各平台看到的租客评价，或者你实地看房后的笔记……多段文本分行输入即可，AI 会自动提取关键信息。"></textarea>
-          </div>
-        </fieldset>
-
-        <!-- 错误提示 -->
-        <div v-if="errorMessage" class="assess-error">
-          <span class="error-icon">&#x26A0;</span>
-          <span>{{ errorMessage }}</span>
-        </div>
-
-        <!-- 提交按钮 -->
-        <div class="form-actions">
-          <button type="button" class="btn-reset" @click="handleReset" :disabled="submitting">重置</button>
-          <button type="submit" class="btn-submit" :disabled="submitting">
-            <span v-if="submitting" class="spinner"></span>
-            {{ submitting ? '提交中…' : '提交评估' }}
+    <div class="an-body">
+      <!-- ===== Step 1: URL 抓取 ===== -->
+      <div class="an-card an-url-card">
+        <div class="an-step-label">Step 1</div>
+        <h3>粘贴房源链接</h3>
+        <p>支持 58同城、贝壳找房、链家</p>
+        <div class="an-url-row">
+          <input
+            v-model="urlInput"
+            type="url"
+            placeholder="https://gz.58.com/zufang/xxx 或 https://gz.ke.com/zufang/xxx"
+            :disabled="scraping"
+            @keydown.enter="handleScrape"
+          />
+          <button class="an-btn-primary" :disabled="scraping || !urlInput.trim()" @click="handleScrape">
+            <span v-if="scraping" class="an-spin"></span>
+            {{ scraping ? '抓取中…' : '自动抓取' }}
           </button>
+          <button class="an-btn-text" @click="showManual = true">手动填写</button>
         </div>
-      </form>
+        <div v-if="scrapeError" class="an-msg an-msg-warn">{{ scrapeError }}</div>
+      </div>
+
+      <!-- ===== Step 2: 房源信息 ===== -->
+      <div class="an-card" v-if="showManual || scrapedData">
+        <div class="an-step-label">Step 2</div>
+        <h3>房源信息</h3>
+        <p v-if="scrapedData" class="an-hint">以下数据已自动抓取，可核对修改</p>
+
+        <div class="an-grid an-grid-3">
+          <div class="an-field">
+            <label>平台链接</label>
+            <input v-model="form.url" type="url" placeholder="自动填入" />
+          </div>
+          <div class="an-field">
+            <label>小区名称 <span class="an-req">*</span></label>
+            <input v-model="form.community" type="text" placeholder="如：骏景花园" />
+          </div>
+          <div class="an-field">
+            <label>区域</label>
+            <select v-model="form.district">
+              <option value="">请选择</option>
+              <option value="天河">天河</option><option value="海珠">海珠</option>
+              <option value="番禺">番禺</option><option value="越秀">越秀</option>
+              <option value="荔湾">荔湾</option><option value="白云">白云</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="an-grid an-grid-3">
+          <div class="an-field">
+            <label>月租（元）</label>
+            <input v-model.number="form.rent" type="number" placeholder="2800" min="0" />
+          </div>
+          <div class="an-field">
+            <label>户型</label>
+            <select v-model="form.layout">
+              <option value="">请选择</option>
+              <option value="1室0厅">1室0厅</option><option value="1室1厅">1室1厅</option>
+              <option value="2室1厅">2室1厅</option><option value="2室2厅">2室2厅</option>
+              <option value="3室1厅">3室1厅</option><option value="3室2厅">3室2厅</option>
+              <option value="4室2厅">4室2厅</option>
+            </select>
+          </div>
+          <div class="an-field">
+            <label>面积（㎡）</label>
+            <input v-model.number="form.area" type="number" placeholder="85" min="0" />
+          </div>
+        </div>
+
+        <div class="an-grid an-grid-4">
+          <div class="an-field">
+            <label>楼层</label>
+            <input v-model="form.floor" type="text" placeholder="12" />
+          </div>
+          <div class="an-field">
+            <label>总楼层</label>
+            <input v-model="form.total_floors" type="text" placeholder="30" />
+          </div>
+          <div class="an-field">
+            <label>朝向</label>
+            <select v-model="form.orientation">
+              <option value="">请选择</option>
+              <option value="东">东</option><option value="南">南</option>
+              <option value="西">西</option><option value="北">北</option>
+              <option value="东南">东南</option><option value="西南">西南</option>
+              <option value="东北">东北</option><option value="西北">西北</option>
+              <option value="南北">南北</option>
+            </select>
+          </div>
+          <div class="an-field">
+            <label>通勤目的地</label>
+            <input v-model="form.commute_destination" type="text" placeholder="如：体育西路" />
+          </div>
+        </div>
+
+        <div class="an-grid an-grid-2">
+          <div class="an-field">
+            <label>临街情况</label>
+            <div class="an-toggle">
+              <button :class="{ active: form.street_facing === true }" @click="form.street_facing = true">临街</button>
+              <button :class="{ active: form.street_facing === false }" @click="form.street_facing = false">不临街</button>
+              <button :class="{ active: form.street_facing === null }" @click="form.street_facing = null">未知</button>
+            </div>
+          </div>
+          <div class="an-field">
+            <label>楼下商铺</label>
+            <div class="an-toggle">
+              <button :class="{ active: form.ground_floor_shop === true }" @click="form.ground_floor_shop = true">有</button>
+              <button :class="{ active: form.ground_floor_shop === false }" @click="form.ground_floor_shop = false">无</button>
+              <button :class="{ active: form.ground_floor_shop === null }" @click="form.ground_floor_shop = null">未知</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Step 3: 评价补充 ===== -->
+      <div class="an-card" v-if="showManual || scrapedData">
+        <div class="an-step-label">Step 3</div>
+        <h3>补充评价</h3>
+        <p>从 58同城评论区、小红书、抖音等平台收集的租客真实评价，粘贴到这里。越多越好，AI 能分析得更准。</p>
+        <textarea
+          v-model="form.review_text"
+          class="an-textarea"
+          rows="5"
+          placeholder="从各平台收集到的真实租客评价，粘贴到这里…&#10;例如：&#10;· 小红书用户 @xxx：这个小区楼下有烧烤摊晚上很吵&#10;· 58评论：房东人不错维修及时，但押金退房扣了300&#10;· 抖音评论区：附近没地铁站，通勤不太方便"
+        ></textarea>
+      </div>
+
+      <!-- ===== 错误提示 ===== -->
+      <div v-if="errorMessage" class="an-card an-card-error">
+        <span class="an-error-icon">⚠️</span>
+        <span>{{ errorMessage }}</span>
+      </div>
+
+      <!-- ===== 提交 ===== -->
+      <div class="an-actions" v-if="showManual || scrapedData">
+        <button class="an-btn-outline" @click="handleReset" :disabled="submitting">清空重填</button>
+        <button class="an-btn-primary an-btn-lg" :disabled="submitting" @click="handleSubmit">
+          <span v-if="submitting" class="an-spin"></span>
+          {{ submitting ? 'AI 分析中…' : '开始 AI 风险评估' }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -172,25 +161,61 @@ import { createAssessment } from '../api/client.js'
 
 const router = useRouter()
 
-const form = reactive({
-  title: '',
-  url: '',
-  community: '',
-  district: '',
-  rent: null,
-  layout: '',
-  area: null,
-  floor: '',
-  total_floors: '',
-  orientation: '',
-  street_facing: null,
-  ground_floor_shop: null,
-  commute_destination: '',
-  review_text: '',
-})
-
+const urlInput = ref('')
+const scraping = ref(false)
+const scrapeError = ref('')
+const scrapedData = ref(null)
+const showManual = ref(false)
 const submitting = ref(false)
 const errorMessage = ref('')
+
+const form = reactive({
+  url: '', community: '', district: '', rent: null,
+  layout: '', area: null, floor: '', total_floors: '',
+  orientation: '', street_facing: null, ground_floor_shop: null,
+  commute_destination: '', review_text: '',
+})
+
+function applyScraped(data) {
+  if (!data) return
+  if (data.url) form.url = data.url
+  if (data.community) form.community = data.community
+  if (data.district) form.district = data.district
+  if (data.price) form.rent = data.price
+  if (data.layout) form.layout = data.layout
+  if (data.area) form.area = data.area
+  if (data.floor) form.floor = data.floor
+  if (data.total_floors) form.total_floors = data.total_floors
+  if (data.orientation) form.orientation = data.orientation
+  if (data.reviews && data.reviews.length) {
+    form.review_text = data.reviews.map(r => `· [${r.platform}] ${r.content}`).join('\n')
+  }
+}
+
+async function handleScrape() {
+  scrapeError.value = ''
+  scraping.value = true
+  try {
+    const resp = await fetch('/api/v1/assessments/scrape', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: urlInput.value.trim() }),
+    })
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}))
+      throw new Error(err.detail || '抓取失败')
+    }
+    const data = await resp.json()
+    scrapedData.value = data
+    applyScraped(data)
+    showManual.value = true
+  } catch (e) {
+    scrapeError.value = e.message || '链接抓取失败，请手动填写信息'
+    showManual.value = true
+  } finally {
+    scraping.value = false
+  }
+}
 
 function toNum(v) {
   if (v === null || v === undefined || v === '') return undefined
@@ -200,52 +225,39 @@ function toNum(v) {
 
 function buildPayload() {
   const p = {}
-  if (form.title) p.title = form.title
   if (form.url) p.source_url = form.url
   if (form.community) p.community = form.community
   if (form.district) p.district = form.district
   if (form.rent !== null && form.rent !== '') p.price = toNum(form.rent)
   if (form.layout) p.layout = form.layout
   if (form.area !== null && form.area !== '') p.area = toNum(form.area)
-  if (form.floor !== undefined && form.floor !== '') p.floor = toNum(form.floor)
-  if (form.total_floors !== undefined && form.total_floors !== '') p.total_floors = toNum(form.total_floors)
+  if (form.floor && form.floor !== '') p.floor = toNum(form.floor)
+  if (form.total_floors && form.total_floors !== '') p.total_floors = toNum(form.total_floors)
   if (form.orientation) p.orientation = form.orientation
-
-  // street_facing → distance_to_street: 临街=20, 不临街=200, 未选=null
   if (form.street_facing === true) p.distance_to_street = 20
   else if (form.street_facing === false) p.distance_to_street = 200
-
-  // ground_floor_shop → has_business_below
   if (form.ground_floor_shop !== null) p.has_business_below = form.ground_floor_shop
-
   if (form.commute_destination) p.commute_destination = form.commute_destination
-
-  // review_text → reviews 数组
-  if (form.review_text) {
-    p.reviews = [{ platform: 'user_input', content: form.review_text }]
-  }
-
+  if (form.review_text) p.reviews = [{ platform: 'user_input', content: form.review_text }]
+  // title auto-gen
+  const community = form.community || ''
+  const district = form.district || ''
+  p.title = [district, community].filter(Boolean).join('') + '租房评估'
   return p
 }
 
 async function handleSubmit() {
   errorMessage.value = ''
   submitting.value = true
-
   try {
     const payload = buildPayload()
     const result = await createAssessment(payload)
-    // result = { house_id, detail_url, message }
     router.push(result.detail_url)
   } catch (err) {
     const detail = err?.response?.data?.detail
-    if (Array.isArray(detail)) {
-      errorMessage.value = detail.map((d) => d.msg).join('；')
-    } else if (typeof detail === 'string') {
-      errorMessage.value = detail
-    } else {
-      errorMessage.value = err.message || '提交失败，请稍后重试'
-    }
+    if (Array.isArray(detail)) errorMessage.value = detail.map(d => d.msg).join('；')
+    else if (typeof detail === 'string') errorMessage.value = detail
+    else errorMessage.value = err.message || '提交失败'
   } finally {
     submitting.value = false
   }
@@ -253,147 +265,165 @@ async function handleSubmit() {
 
 function handleReset() {
   Object.assign(form, {
-    title: '', url: '', community: '', district: '', rent: null,
+    url: '', community: '', district: '', rent: null,
     layout: '', area: null, floor: '', total_floors: '',
     orientation: '', street_facing: null, ground_floor_shop: null,
     commute_destination: '', review_text: '',
   })
+  urlInput.value = ''
+  scrapedData.value = null
+  scrapeError.value = ''
   errorMessage.value = ''
 }
 </script>
 
 <style scoped>
-.assess-view { margin: -24px -20px; }
+.assess-new { margin: -24px -20px; }
 
-/* ===== Hero ===== */
-.assess-hero {
-  background: linear-gradient(160deg, #FEF3C7 0%, #FFEDD5 40%, #FEF7ED 70%, #fff 100%);
-  padding: 48px 24px 52px; text-align: center; position: relative; overflow: hidden;
+/* ── Hero ── */
+.an-hero {
+  background: linear-gradient(160deg, #FEF9E7 0%, #FFF7ED 40%, #FFFBF5 70%, #fff 100%);
+  padding: 56px 24px 60px; text-align: center; position: relative; overflow: hidden;
+  border-bottom: 1px solid #FDE68A33;
 }
-.assess-hero::before {
+.an-hero::before {
   content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-  background: radial-gradient(circle at 30% 40%, rgba(251,191,36,0.1) 0%, transparent 50%),
-              radial-gradient(circle at 70% 60%, rgba(245,158,11,0.06) 0%, transparent 50%);
+  background: radial-gradient(circle at 30% 40%, rgba(251,191,36,0.06) 0%, transparent 50%),
+              radial-gradient(circle at 70% 60%, rgba(245,158,11,0.04) 0%, transparent 50%);
 }
-.assess-hero > * { position: relative; z-index: 1; }
-.assess-hero h1 { font-size: 32px; font-weight: 800; color: var(--text); margin-bottom: 10px; }
-.assess-hero h1 span { background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-.assess-hero p { font-size: 16px; color: var(--text-secondary); }
-
-/* ===== Form Wrapper ===== */
-.assess-form-wrapper { max-width: 800px; margin: -28px auto 48px; padding: 0 24px; position: relative; z-index: 2; }
-
-.assess-form {
-  background: #fff; border-radius: var(--radius); padding: 36px 32px;
-  box-shadow: var(--shadow-lg);
+.an-hero > * { position: relative; z-index: 1; }
+.an-hero-badge {
+  display: inline-block; padding: 5px 18px; margin-bottom: 16px;
+  background: rgba(245,158,11,0.12); color: #B45309;
+  border-radius: 100px; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.5px;
 }
+.an-hero h1 { font-size: 34px; font-weight: 800; color: #1F2937; margin-bottom: 12px; }
+.an-hero h1 span { background: linear-gradient(135deg, #F59E0B, #EA580C); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.an-hero p { font-size: 16px; color: #9CA3AF; max-width: 540px; margin: 0 auto; line-height: 1.8; }
 
-/* ===== Form Sections ===== */
-.form-section {
-  border: none; padding: 0; margin-bottom: 32px;
-}
-.form-section-title {
-  font-size: 16px; font-weight: 700; color: var(--text);
-  padding-left: 14px; border-left: 4px solid var(--primary);
+/* ── Body ── */
+.an-body { max-width: 780px; margin: 0 auto; padding: 36px 24px 64px; }
+
+/* ── Card ── */
+.an-card {
+  background: #fff; border-radius: 16px; padding: 28px 32px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04);
   margin-bottom: 20px;
 }
+.an-card-error { background: #FEF2F2; border: 1px solid #FECACA; color: #991B1B; display: flex; gap: 10px; align-items: flex-start; }
+.an-error-icon { flex-shrink: 0; margin-top: 2px; }
+.an-step-label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.5px; color: #F59E0B; margin-bottom: 6px;
+}
+.an-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 4px; color: #1F2937; }
+.an-card > p { font-size: 14px; color: #9CA3AF; margin-bottom: 18px; }
+.an-hint { color: #10B981 !important; font-weight: 500; }
 
-/* ===== Form Groups ===== */
-.form-group {
-  display: flex; flex-direction: column; min-width: 0;
+/* ── URL Row ── */
+.an-url-card { padding-bottom: 24px; }
+.an-url-row {
+  display: flex; gap: 10px; margin-top: 16px;
 }
-.form-group-full { grid-column: 1 / -1; }
-.form-group label {
-  font-size: 13px; font-weight: 600; color: var(--text-secondary);
-  margin-bottom: 6px;
+.an-url-row input {
+  flex: 1; padding: 13px 18px; border: 1.5px solid #E5E7EB;
+  border-radius: 12px; font-size: 15px; outline: none; color: #1F2937;
+  transition: border-color .2s, box-shadow .2s; font-family: inherit;
 }
-.form-group .optional { font-weight: 400; color: var(--text-muted); font-size: 12px; }
-.form-group input[type="text"],
-.form-group input[type="url"],
-.form-group input[type="number"],
-.form-group textarea,
-.form-group select {
-  padding: 10px 14px; border: 1.5px solid var(--border-strong);
-  border-radius: var(--radius-xs); font-size: 14px; outline: none;
-  background: #fff; color: var(--text);
-  font-family: inherit; transition: border-color .2s, box-shadow .2s;
-}
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(245,158,11,0.1);
-}
-.form-group input::placeholder,
-.form-group textarea::placeholder { color: var(--text-muted); font-size: 13px; }
-.form-group textarea { resize: vertical; min-height: 100px; line-height: 1.7; }
+.an-url-row input:focus { border-color: #F59E0B; box-shadow: 0 0 0 3px rgba(245,158,11,0.1); }
+.an-url-row input::placeholder { color: #D1D5DB; }
+.an-url-row input:disabled { background: #F9FAFB; }
 
-/* ===== Form Row (multi-column) ===== */
-.form-row {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 16px; margin-bottom: 18px;
-}
-
-/* ===== Radio Group ===== */
-.radio-group { display: flex; gap: 16px; padding: 2px 0; }
-.radio-option {
-  display: flex; align-items: center; gap: 6px; cursor: pointer;
-  font-size: 14px; color: var(--text);
-}
-.radio-option input[type="radio"] {
-  accent-color: var(--primary); width: 16px; height: 16px; margin: 0;
-}
-.radio-label { user-select: none; }
-
-/* ===== Actions ===== */
-.form-actions {
-  display: flex; justify-content: flex-end; gap: 12px;
-  padding-top: 8px; border-top: 1px solid var(--border);
-}
-.btn-reset {
-  padding: 12px 28px; border: 1.5px solid var(--border-strong);
-  border-radius: var(--radius-sm); background: #fff;
-  font-size: 14px; font-weight: 600; color: var(--text-secondary);
-  transition: all .2s;
-}
-.btn-reset:hover { border-color: var(--text-secondary); color: var(--text); }
-.btn-submit {
-  padding: 12px 36px; border: none; border-radius: var(--radius-sm);
-  background: var(--primary-gradient); color: #fff;
-  font-size: 15px; font-weight: 700;
+/* ── Buttons ── */
+.an-btn-primary {
+  padding: 13px 28px; border: none; border-radius: 12px;
+  background: linear-gradient(135deg, #F59E0B, #EA580C); color: #fff;
+  font-size: 15px; font-weight: 700; cursor: pointer; white-space: nowrap;
   transition: transform .15s, box-shadow .2s;
 }
-.btn-submit:hover { transform: scale(1.02); box-shadow: 0 4px 16px rgba(245,158,11,0.35); }
-
-/* ===== Error Message ===== */
-.assess-error {
-  display: flex; align-items: flex-start; gap: 10px;
-  padding: 14px 18px; margin-bottom: 8px;
-  background: #FEF2F2; border: 1px solid #FECACA;
-  border-radius: var(--radius-sm); color: #991B1B;
-  font-size: 14px; line-height: 1.6;
+.an-btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(245,158,11,0.3); }
+.an-btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+.an-btn-lg { padding: 16px 48px; font-size: 17px; border-radius: 14px; }
+.an-btn-outline {
+  padding: 13px 28px; border: 1.5px solid #E5E7EB; border-radius: 12px;
+  background: #fff; font-size: 15px; font-weight: 600; color: #6B7280; cursor: pointer;
+  transition: all .2s;
 }
-.error-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.an-btn-outline:hover:not(:disabled) { border-color: #9CA3AF; color: #1F2937; }
+.an-btn-outline:disabled { opacity: 0.5; cursor: not-allowed; }
+.an-btn-text {
+  padding: 13px 20px; border: none; background: none; font-size: 14px;
+  color: #9CA3AF; cursor: pointer; transition: color .2s; white-space: nowrap;
+}
+.an-btn-text:hover { color: #6B7280; }
 
-/* ===== Spinner ===== */
-.spinner {
-  display: inline-block; width: 16px; height: 16px;
-  border: 2px solid rgba(255,255,255,0.3);
-  border-top-color: #fff; border-radius: 50%;
-  animation: spin .6s linear infinite;
+/* ── Form Grid ── */
+.an-grid { display: grid; gap: 14px; margin-bottom: 14px; }
+.an-grid-2 { grid-template-columns: 1fr 1fr; }
+.an-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.an-grid-4 { grid-template-columns: repeat(4, 1fr); }
+.an-field {
+  display: flex; flex-direction: column; min-width: 0;
+}
+.an-field label {
+  font-size: 13px; font-weight: 600; color: #6B7280; margin-bottom: 6px;
+}
+.an-req { color: #EF4444; }
+.an-field input, .an-field select {
+  padding: 11px 14px; border: 1.5px solid #E5E7EB; border-radius: 10px;
+  font-size: 14px; outline: none; color: #1F2937; font-family: inherit;
+  background: #fff; transition: border-color .2s, box-shadow .2s;
+}
+.an-field input:focus, .an-field select:focus { border-color: #F59E0B; box-shadow: 0 0 0 3px rgba(245,158,11,0.08); }
+.an-field input::placeholder { color: #D1D5DB; }
+
+/* ── Toggle ── */
+.an-toggle { display: flex; gap: 4px; background: #F3F4F6; border-radius: 10px; padding: 4px; }
+.an-toggle button {
+  flex: 1; padding: 8px 12px; border: none; background: none;
+  border-radius: 8px; font-size: 13px; font-weight: 600; color: #6B7280;
+  cursor: pointer; transition: all .2s;
+}
+.an-toggle button.active { background: #fff; color: #1F2937; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+/* ── Textarea ── */
+.an-textarea {
+  width: 100%; padding: 14px 16px; border: 1.5px solid #E5E7EB; border-radius: 12px;
+  font-size: 14px; outline: none; color: #1F2937; font-family: inherit;
+  resize: vertical; min-height: 120px; line-height: 1.8; box-sizing: border-box;
+  transition: border-color .2s, box-shadow .2s;
+}
+.an-textarea:focus { border-color: #F59E0B; box-shadow: 0 0 0 3px rgba(245,158,11,0.08); }
+.an-textarea::placeholder { color: #D1D5DB; font-size: 13px; }
+
+/* ── Messages ── */
+.an-msg { font-size: 14px; padding: 10px 14px; border-radius: 10px; margin-top: 14px; }
+.an-msg-warn { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+
+/* ── Actions ── */
+.an-actions { display: flex; justify-content: flex-end; gap: 12px; }
+
+/* ── Spinner ── */
+.an-spin {
+  display: inline-block; width: 15px; height: 15px;
+  border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+  border-radius: 50%; animation: an-spin .6s linear infinite;
   margin-right: 8px; vertical-align: middle;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.btn-submit:disabled,
-.btn-reset:disabled { opacity: 0.6; cursor: not-allowed; }
+@keyframes an-spin { to { transform: rotate(360deg); } }
 
 @media (max-width: 768px) {
-  .assess-hero { padding: 36px 20px 44px; }
-  .assess-hero h1 { font-size: 26px; }
-  .assess-form { padding: 24px 18px; }
-  .form-row { grid-template-columns: 1fr; }
-  .form-actions { flex-direction: column; }
-  .btn-reset, .btn-submit { width: 100%; }
+  .an-hero { padding: 40px 20px 44px; }
+  .an-hero h1 { font-size: 26px; }
+  .an-grid-2, .an-grid-3, .an-grid-4 { grid-template-columns: 1fr 1fr; }
+  .an-url-row { flex-wrap: wrap; }
+  .an-url-row .an-btn-primary, .an-url-row .an-btn-text { flex: 1; text-align: center; justify-content: center; }
+  .an-card { padding: 22px 18px; }
+  .an-actions { flex-direction: column; }
+  .an-actions .an-btn-primary, .an-actions .an-btn-outline { width: 100%; text-align: center; }
+}
+@media (max-width: 480px) {
+  .an-grid-2, .an-grid-3, .an-grid-4 { grid-template-columns: 1fr; }
 }
 </style>
