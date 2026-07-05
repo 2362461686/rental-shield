@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: rental-shield
+    runtime: python
+    runtimeVersion: "3.11"
+    buildCommand: pip install -r backend/requirements.txt && cd frontend && npm install && npm run build
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: AMAP_API_KEY
+        sync: false

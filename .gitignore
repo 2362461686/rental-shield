@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 *.pyo
 *.db
+!rental.db
 .env
 .DS_Store
 .streampath

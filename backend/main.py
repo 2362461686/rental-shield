@@ -18,6 +18,13 @@ from backend.routers import houses, analysis, agent_routes, images, districts, c
 app = FastAPI(title="Rental-Shield API", version="1.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
+
+@app.on_event("startup")
+def startup():
+    """启动时自动初始化数据库（创建表 + 运行迁移）"""
+    from backend.db.database import init_db
+    init_db()
+
 # API 路由
 app.include_router(houses.router)
 app.include_router(analysis.router)

@@ -1,9 +1,10 @@
-fastapi
-uvicorn[standard]
-sqlalchemy
-openai
+fastapi>=0.110
+uvicorn[standard]>=0.29
+sqlalchemy>=2.0
+openai>=1.30
 pymysql
 requests
 beautifulsoup4
 Pillow
 httpx
+python-multipart
