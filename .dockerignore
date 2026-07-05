@@ -1,0 +1,28 @@
+# Git
+.git/
+.gitignore
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# IDE
+.idea/
+.vscode/
+.cursor/
+
+# Large debug files
+*.png
+debug_*.png
+
+# Misc
+nul
+*.log
+.env
+.streamlit/

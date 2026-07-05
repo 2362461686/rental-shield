@@ -1,0 +1,16 @@
+version: "3.8"
+services:
+  app:
+    build: .
+    container_name: rental-shield
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - AMAP_API_KEY=${AMAP_API_KEY:-}
+    volumes:
+      - rental_data:/app/data
+
+volumes:
+  rental_data:

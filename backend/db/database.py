@@ -4,8 +4,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
 # 使用绝对路径解析 rental.db（在项目根目录下）
-_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-DB_PATH = os.path.join(_PROJECT_ROOT, "rental.db")
+# 数据库路径：优先使用环境变量 RENTAL_DB_PATH（Docker 持久化），否则用项目根目录
+if os.environ.get("RENTAL_DB_PATH"):
+    DB_PATH = os.environ["RENTAL_DB_PATH"]
+else:
+    _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    DB_PATH = os.path.join(_PROJECT_ROOT, "rental.db")
 DATABASE_URL = f"sqlite:///{DB_PATH}"
 
 engine = create_engine(DATABASE_URL, echo=False, connect_args={"check_same_thread": False})
