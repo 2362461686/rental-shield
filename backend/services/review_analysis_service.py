@@ -1,8 +1,13 @@
-"""评论关键词分析服务（纯规则引擎，不接 AI）"""
+"""评论关键词分析服务（DeepSeek 优先，规则引擎兜底）"""
+import json
+from typing import Optional
 from sqlalchemy.orm import Session
+from openai import OpenAI
+
+from backend import config
 from backend.db.models import Review
 
-# ── 六类风险的关键词库 ──
+# ── 六类风险的关键词库（规则引擎兜底用） ──
 CATEGORY_RULES = {
     "noise": {
         "label": "noise",
@@ -55,15 +60,102 @@ CATEGORY_RULES = {
     },
 }
 
+CATEGORY_KEYS = ["noise", "sunlight", "landlord", "deposit", "commute", "safety"]
+
+# ═══════════════════════════════════════════════════════
+#  DeepSeek AI 分析（优先路径）
+# ═══════════════════════════════════════════════════════
+
+SYSTEM_PROMPT = """你是广州租房风险分析师。根据租客评论，分析六类风险并输出 JSON。
+
+## 规则
+- 只能基于评论原文分析，禁止编造任何信息
+- 评论未提及的维度：level="unknown", score=0, evidence=[]
+- evidence 必须是评论中的原文句子或短语，不可改写或编造
+- 计分标准：0=低风险, 1-30=中风险, 31-100=高风险
+- overall_risk_score 取六类中最高分
+
+## 输出格式（只输出 JSON，禁止额外文字）
+{
+  "overall_risk_level": "low|medium|high",
+  "overall_risk_score": 0,
+  "categories": {
+    "noise":    {"label":"noise",    "level":"low|medium|high|unknown", "score":0, "evidence":["原文片段"]},
+    "sunlight": {"label":"sunlight", "level":"low|medium|high|unknown", "score":0, "evidence":["原文片段"]},
+    "landlord": {"label":"landlord", "level":"low|medium|high|unknown", "score":0, "evidence":["原文片段"]},
+    "deposit":  {"label":"deposit",  "level":"low|medium|high|unknown", "score":0, "evidence":["原文片段"]},
+    "commute":  {"label":"commute",  "level":"low|medium|high|unknown", "score":0, "evidence":["原文片段"]},
+    "safety":   {"label":"safety",   "level":"low|medium|high|unknown", "score":0, "evidence":["原文片段"]}
+  }
+}"""
+
+
+def _call_deepseek(review_texts: list[str]) -> Optional[str]:
+    """调用 DeepSeek，成功返回原始文本，失败返回 None"""
+    if not config.DEEPSEEK_API_KEY:
+        return None
+    client = OpenAI(api_key=config.DEEPSEEK_API_KEY, base_url=config.DEEPSEEK_BASE_URL)
+    user_prompt = "请分析以下租客评论（仅基于原文）：\n" + "\n---\n".join(review_texts)
+    try:
+        response = client.chat.completions.create(
+            model=config.DEEPSEEK_MODEL,
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=0.05,
+            max_tokens=3000,
+        )
+        return response.choices[0].message.content
+    except Exception:
+        return None
+
+
+def _parse_deepseek_json(raw: Optional[str]) -> Optional[dict]:
+    """解析 DeepSeek 返回的 JSON；剥离 ```json 包裹；失败返回 None"""
+    if not raw:
+        return None
+    try:
+        text = raw.strip()
+        if text.startswith("```"):
+            lines = text.split("\n")
+            lo = 1 if lines[0].strip().startswith("```") else 0
+            hi = -1 if lines and lines[-1].strip() == "```" else len(lines)
+            text = "\n".join(lines[lo:hi])
+        return json.loads(text)
+    except (json.JSONDecodeError, TypeError):
+        return None
+
+
+def _is_valid_analysis(parsed: dict) -> bool:
+    """基本校验：必须有 overall + categories 且六个分类齐全"""
+    if not isinstance(parsed, dict):
+        return False
+    if "overall_risk_level" not in parsed:
+        return False
+    cats = parsed.get("categories", {})
+    return all(k in cats for k in CATEGORY_KEYS)
+
+
+def _try_deepseek_analysis(review_texts: list[str]) -> Optional[dict]:
+    """尝试 DeepSeek 分析；任意环节失败返回 None → 回退规则版"""
+    raw = _call_deepseek(review_texts)
+    if raw is None:
+        return None
+    parsed = _parse_deepseek_json(raw)
+    if parsed is None:
+        return None
+    if not _is_valid_analysis(parsed):
+        return None
+    return parsed
+
+
+# ═══════════════════════════════════════════════════════
+#  规则引擎（兜底路径）
+# ═══════════════════════════════════════════════════════
 
 def _score_category(rules: dict, reviews_text: list[str]) -> dict:
-    """扫描评论文本，计算单类风险和证据
-
-    返回值：
-      level   — low / medium / high / unknown
-      score   — 0 ~ 100
-      evidence — 命中的原文上下文片段
-    """
+    """扫描评论文本，计算单类风险和证据"""
     neg_set = set(rules["negative"])
     pos_set = set(rules["positive"])
 
@@ -75,7 +167,6 @@ def _score_category(rules: dict, reviews_text: list[str]) -> dict:
         for kw in neg_set:
             if kw in text:
                 matched_neg.add(kw)
-                # 截取关键词上下文作为证据
                 idx = text.find(kw)
                 start = max(0, idx - 8)
                 end = min(len(text), idx + len(kw) + 12)
@@ -90,7 +181,6 @@ def _score_category(rules: dict, reviews_text: list[str]) -> dict:
             if kw in text:
                 matched_pos.add(kw)
 
-    # 计分：负面 +15，正面 -10，0-100
     raw = len(matched_neg) * 15 - len(matched_pos) * 10
     score = max(0, min(100, raw))
 
@@ -108,22 +198,46 @@ def _score_category(rules: dict, reviews_text: list[str]) -> dict:
 
 
 def _recommendation(overall_level: str) -> str:
-    """总风险等级 → 建议"""
     mapping = {"low": "recommend", "medium": "consider", "high": "reject"}
     return mapping.get(overall_level, "unknown")
 
 
-def analyze_reviews(db: Session, house_id: int) -> dict:
-    """评论关键词风险分析（纯规则引擎）
+def _analyze_with_rules(texts: list[str]) -> dict:
+    """规则引擎分析，返回 { overall_risk_level, overall_risk_score, categories }"""
+    categories = {}
+    all_scores = []
+    for cat_key, rules in CATEGORY_RULES.items():
+        result = _score_category(rules, texts)
+        result["label"] = rules["label"]
+        categories[cat_key] = result
+        if result["level"] != "unknown":
+            all_scores.append(result["score"])
 
-    返回：
-      house_id
-      source              — rules / none
-      overall_risk_level  — low / medium / high / unknown
-      overall_risk_score  — 0 ~ 100
-      recommendation      — recommend / consider / reject / unknown
-      total_reviews
-      categories          — { noise: { level, score, evidence }, ... }
+    overall_score = max(all_scores) if all_scores else 0
+    if overall_score == 0:
+        overall_level = "low"
+    elif overall_score <= 30:
+        overall_level = "medium"
+    else:
+        overall_level = "high"
+
+    return {
+        "overall_risk_level": overall_level,
+        "overall_risk_score": overall_score,
+        "categories": categories,
+    }
+
+
+# ═══════════════════════════════════════════════════════
+#  对外入口
+# ═══════════════════════════════════════════════════════
+
+def analyze_reviews(db: Session, house_id: int) -> dict:
+    """评论风险分析：DeepSeek 优先 → 任意失败 → 规则引擎兜底
+
+    返回结构（两种路径一致）：
+      house_id, source, overall_risk_level, overall_risk_score,
+      recommendation, total_reviews, categories
     """
     reviews = db.query(Review).filter(Review.house_id == house_id).all()
 
@@ -140,31 +254,28 @@ def analyze_reviews(db: Session, house_id: int) -> dict:
             "categories": {},
         }
 
-    # 对六类逐一评分
-    categories = {}
-    all_scores = []
-    for cat_key, rules in CATEGORY_RULES.items():
-        result = _score_category(rules, texts)
-        result["label"] = rules["label"]
-        categories[cat_key] = result
-        if result["level"] != "unknown":
-            all_scores.append(result["score"])
+    # ── DeepSeek 优先 ──
+    deepseek_result = _try_deepseek_analysis(texts)
+    if deepseek_result is not None:
+        overall_level = deepseek_result.get("overall_risk_level", "unknown")
+        return {
+            "house_id": house_id,
+            "source": "deepseek",
+            "overall_risk_level": overall_level,
+            "overall_risk_score": deepseek_result.get("overall_risk_score", 0),
+            "recommendation": _recommendation(overall_level),
+            "total_reviews": len(reviews),
+            "categories": deepseek_result.get("categories", {}),
+        }
 
-    # 综合风险
-    overall_score = max(all_scores) if all_scores else 0
-    if overall_score == 0:
-        overall_level = "low"
-    elif overall_score <= 30:
-        overall_level = "medium"
-    else:
-        overall_level = "high"
-
+    # ── 规则引擎兜底 ──
+    rules_result = _analyze_with_rules(texts)
     return {
         "house_id": house_id,
         "source": "rules",
-        "overall_risk_level": overall_level,
-        "overall_risk_score": overall_score,
-        "recommendation": _recommendation(overall_level),
+        "overall_risk_level": rules_result["overall_risk_level"],
+        "overall_risk_score": rules_result["overall_risk_score"],
+        "recommendation": _recommendation(rules_result["overall_risk_level"]),
         "total_reviews": len(reviews),
-        "categories": categories,
+        "categories": rules_result["categories"],
     }
