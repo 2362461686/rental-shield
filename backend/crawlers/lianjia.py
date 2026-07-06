@@ -1,64 +1,70 @@
-"""链家爬虫 — 通过页面解析获取广州租房数据"""
-import requests, re
+"""链家爬虫 — Playwright 无头浏览器 + Cookie 管理"""
+import re, time, random, logging
 from bs4 import BeautifulSoup
 from backend.crawlers.base import BaseCrawler
+
+logger = logging.getLogger(__name__)
 
 class LianjiaCrawler(BaseCrawler):
     source = "lianjia"
     base_url = "https://gz.lianjia.com"
+    min_interval = 10.0
 
     def fetch_listings(self, city: str = "广州", page: int = 1) -> list[dict]:
+        from playwright.sync_api import sync_playwright
         results = []
-        url = f"https://gz.lianjia.com/zufang/pg{page}/"
+        city_map = {"广州": "gz", "北京": "bj", "深圳": "sz", "上海": "sh"}
+        cc = city_map.get(city, "gz")
+        url = f"https://{cc}.lianjia.com/zufang/"
+
         try:
-            resp = requests.get(url, headers=self.headers, timeout=15)
-            if resp.status_code != 200:
-                return results
-            resp.encoding = "utf-8"
-        except Exception:
-            return results
+            with sync_playwright() as p:
+                b = p.chromium.launch(headless=True)
+                ctx = b.new_context(
+                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0",
+                    viewport={"width": 1366, "height": 768},
+                    locale="zh-CN",
+                )
+                pg = ctx.new_page()
+                # Visit homepage for cookies
+                pg.goto(f"https://{cc}.lianjia.com/", timeout=30000, wait_until="domcontentloaded")
+                time.sleep(1.5 + random.random())
+                # Visit listings
+                list_url = url if page == 1 else f"{url}pg{page}/"
+                pg.goto(list_url, timeout=30000, wait_until="load")
+                time.sleep(2.5 + random.random() * 2)
+                soup = BeautifulSoup(pg.content(), "html.parser")
 
-        soup = BeautifulSoup(resp.text, "html.parser")
-        items = soup.select(".content__list--item")
-        for item in items:
-            try:
-                title_el = item.select_one(".content__list--item--title a")
-                title = title_el.get_text(strip=True) if title_el else ""
-                link = title_el.get("href", "") if title_el else ""
+                for item in soup.select(".content__list--item"):
+                    try:
+                        title_el = item.select_one(".content__list--item--title a")
+                        title = title_el.get_text(strip=True) if title_el else ""
+                        href = title_el.get("href", "") if title_el else ""
+                        price_el = item.select_one(".content__list--item-price em")
+                        price = int(re.sub(r"\D", "", price_el.get_text())) if price_el else 0
+                        # Parse description parts
+                        desc_els = item.select(".content__list--item--des")
+                        community = ""
+                        if desc_els:
+                            links = desc_els[0].find_all("a")
+                            community = links[0].get_text(strip=True) if links else ""
+                        district = ""
+                        if len(item.select(".content__list--item--des")) > 1:
+                            loc_links = item.select(".content__list--item--des")[1].find_all("a")
+                            district = loc_links[0].get_text(strip=True) if loc_links else ""
 
-                price_el = item.select_one(".content__list--item-price em")
-                price = int(re.sub(r"\D", "", price_el.get_text())) if price_el else 0
-
-                desc_parts = item.select(".content__list--item--des")
-                community_text = ""
-                layout_text = ""
-                area_val = 0
-                district_text = ""
-                if desc_parts:
-                    text = desc_parts[0].get_text(" ", strip=True)
-                    parts = [p.strip() for p in text.split("/")]
-                    if len(parts) >= 1:
-                        community_text = parts[0]
-                    if len(parts) >= 2:
-                        layout_text = parts[1]
-                    if len(parts) >= 3:
-                        am = re.search(r"(\d+)", parts[2])
-                        area_val = float(am.group(1)) if am else 0
-                loc_el = item.select_one(".content__list--item--des a")
-                if loc_el:
-                    district_text = loc_el.get_text(strip=True)
-
-                if price > 0 and (community_text or title):
-                    results.append({
-                        "title": title or f"{community_text}{layout_text}",
-                        "community": community_text,
-                        "price": price,
-                        "layout": layout_text,
-                        "area": area_val,
-                        "district": district_text,
-                        "source_url": f"{self.base_url}{link}" if link.startswith("/") else link,
-                        "source": self.source,
-                    })
-            except Exception:
-                continue
+                        if price > 0:
+                            results.append({
+                                "title": title or community,
+                                "community": community,
+                                "price": price,
+                                "district": district,
+                                "source_url": href,
+                                "source": self.source,
+                            })
+                    except Exception:
+                        continue
+                b.close()
+        except Exception as e:
+            logger.error(f"Lianjia playwright: {e}")
         return results
