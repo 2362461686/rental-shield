@@ -8,6 +8,15 @@
     </section>
 
     <div class="an-body">
+      <!-- Step Progress Indicator -->
+      <div class="step-progress" v-if="showManual || scrapedData">
+        <div class="step-dot completed">1</div>
+        <div class="step-line" :class="{ completed: currentStep >= 2 }"></div>
+        <div class="step-dot" :class="{ completed: currentStep >= 2, active: currentStep === 2 }">2</div>
+        <div class="step-line" :class="{ completed: currentStep >= 3 }"></div>
+        <div class="step-dot" :class="{ completed: currentStep >= 3, active: currentStep === 3 }">3</div>
+      </div>
+
       <!-- ===== Step 1: URL 抓取 ===== -->
       <div class="an-card an-url-card">
         <div class="an-step-label">Step 1</div>
@@ -155,13 +164,19 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { reactive, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { createAssessment } from '../api/client.js'
 
 const router = useRouter()
 
 const urlInput = ref('')
+// Track which step user has reached
+const currentStep = computed(() => {
+  if (form.community || form.district || form.rent) return 3
+  if (showManual.value || scrapedData.value) return 2
+  return 1
+})
 const scraping = ref(false)
 const scrapeError = ref('')
 const scrapedData = ref(null)
@@ -304,6 +319,26 @@ function handleReset() {
 
 /* ── Body ── */
 .an-body { max-width: 780px; margin: 0 auto; padding: 36px 24px 64px; }
+
+/* ── Step Progress ── */
+.step-progress {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0; margin-bottom: 24px; padding: 0 40px;
+}
+.step-dot {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: #F3F4F6; color: #9CA3AF;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; transition: all .3s;
+  flex-shrink: 0;
+}
+.step-dot.completed { background: var(--primary); color: #fff; }
+.step-dot.active { background: #fff; border: 2px solid var(--primary); color: var(--primary); }
+.step-line {
+  height: 2px; flex: 1; min-width: 30px;
+  background: #E5E7EB; transition: background .3s;
+}
+.step-line.completed { background: var(--primary); }
 
 /* ── Card ── */
 .an-card {

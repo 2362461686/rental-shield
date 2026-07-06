@@ -17,8 +17,11 @@
       <section class="search-main">
         <!-- View toggle -->
         <div class="view-toggle" v-if="houseStore.searched && !houseStore.loading">
-          <button :class="{ active: viewMode === 'list' }" @click="viewMode = 'list'">&#x1F4CB; 列表</button>
-          <button :class="{ active: viewMode === 'map' }" @click="viewMode = 'map'">&#x1F5FA; 地图</button>
+          <div class="toggle-group">
+            <button :class="{ active: viewMode === 'list' }" @click="viewMode = 'list'">&#x1F4CB; 列表</button>
+            <button :class="{ active: viewMode === 'map' }" @click="viewMode = 'map'">&#x1F5FA; 地图</button>
+          </div>
+          <span class="results-count" v-if="viewMode === 'list'">共 <strong>{{ houseStore.totalCount }}</strong> 套</span>
         </div>
 
         <!-- District comparison bar (when no specific filters applied) -->
@@ -60,11 +63,32 @@
           <template v-if="houseStore.searched && !houseStore.loading">
             <div v-if="houseStore.houses.length === 0" class="empty-state">
               <p>没有找到匹配的房源</p>
-              <p style="font-size:13px;margin-top:8px">试试调整筛选条件</p>
+              <p v-if="houseStore.filters.keyword" style="font-size:13px;margin-top:8px">
+                "{{ houseStore.filters.keyword }}" 暂未收录
+              </p>
+              <p style="font-size:13px;margin-top:4px">试试调整筛选条件，或创建该社区的评估</p>
+              <button
+                v-if="houseStore.filters.keyword"
+                class="go-search-btn"
+                @click="goAssess(houseStore.filters.keyword)"
+              >为 "{{ houseStore.filters.keyword }}" 创建评估</button>
             </div>
             <div v-else>
-              <p class="results-count">共找到 <strong>{{ houseStore.houses.length }}</strong> 套房源</p>
               <HouseCard v-for="h in houseStore.houses" :key="h.id" :house="h" />
+              <!-- Pagination -->
+              <div class="pagination" v-if="houseStore.totalPages > 1">
+                <button
+                  :disabled="houseStore.page <= 1"
+                  @click="houseStore.loadPage(houseStore.page - 1)"
+                  class="page-btn"
+                >&#x25C0; 上一页</button>
+                <span class="page-info">第 {{ houseStore.page }} / {{ houseStore.totalPages }} 页</span>
+                <button
+                  :disabled="!houseStore.hasMore"
+                  @click="houseStore.loadPage(houseStore.page + 1)"
+                  class="page-btn"
+                >下一页 &#x25B6;</button>
+              </div>
             </div>
           </template>
         </template>
@@ -98,20 +122,31 @@ const hasFilters = computed(() => {
 })
 
 onMounted(() => {
+  // Read URL query params: districts and keyword
   const qDistricts = route.query.districts
+  const qKeyword = route.query.keyword
   if (qDistricts) {
     const districts = typeof qDistricts === 'string'
       ? qDistricts.split(',').map(d => d.trim()).filter(Boolean)
       : qDistricts
     if (districts.length > 0) {
       houseStore.updateFilter('districts', districts)
-      houseStore.search()
     }
+  }
+  if (qKeyword && typeof qKeyword === 'string') {
+    houseStore.updateFilter('keyword', qKeyword.trim())
+  }
+  if (qDistricts || qKeyword) {
+    houseStore.search()
   }
 })
 
 function handleSearch() {
   houseStore.search()
+}
+
+function goAssess(keyword) {
+  router.push(`/assess/new?community=${encodeURIComponent(keyword)}`)
 }
 
 function selectDistrict(district) {

@@ -6,6 +6,13 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
+// rawAxios 用于需要读取响应头的场景
+const rawAxios = axios.create({
+  baseURL: '/api/v1',
+  timeout: 30000,
+  headers: { 'Content-Type': 'application/json' },
+})
+
 // 响应拦截器：错误处理
 api.interceptors.response.use(
   (res) => res.data,
@@ -16,8 +23,19 @@ api.interceptors.response.use(
 )
 
 // --- Houses ---
-export const fetchHouses = (params) => api.get('/houses', { params })
+export const fetchHouses = async (params) => {
+  const res = await rawAxios.get('/houses', { params })
+  return {
+    items: res.data,
+    total: parseInt(res.headers['x-total-count']) || res.data.length,
+    page: parseInt(res.headers['x-page']) || 1,
+    pageSize: parseInt(res.headers['x-page-size']) || res.data.length,
+  }
+}
+export const fetchCommunityStats = () => api.get('/houses/communities/stats')
+export const fetchLandlordHouses = (hash) => api.get(`/houses/landlords/${encodeURIComponent(hash)}`)
 export const fetchHouseDetail = (id) => api.get(`/houses/${id}`)
+export const fetchPriceHistory = (id) => api.get(`/houses/${id}/price-history`)
 export const fetchReviews = (id) => api.get(`/houses/${id}/reviews`)
 export const fetchImages = (id) => api.get(`/houses/${id}/images`)
 

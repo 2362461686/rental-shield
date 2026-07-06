@@ -25,7 +25,7 @@ def init_db():
         from backend.db.migrations import run_migrations
         run_migrations()
     except Exception as e:
-        print(f"⚠️  迁移执行失败（可能表已存在）: {e}")
+        print(f"[WARN] Migration skipped (tables may already exist): {e}")
 
 
 def get_db() -> Session:

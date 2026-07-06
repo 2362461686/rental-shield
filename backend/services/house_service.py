@@ -12,19 +12,24 @@ def list_houses(db: Session, districts=None, layout=None, min_price=0, max_price
 
     results = []
     for h in houses:
-        light = utils.simulate_sunlight(h.orientation, h.floor, h.total_floors, h.window_type)
+        has_sim_data = bool(h.orientation and h.building_type)
+        light = utils.simulate_sunlight(h.orientation, h.floor, h.total_floors, h.window_type) if h.orientation else {"hours": None, "level": "未知"}
         noise = utils.simulate_noise(h.building_type, h.building_year, h.floor, h.total_floors,
-                                      h.distance_to_street, h.has_business_below)
+                                      h.distance_to_street, h.has_business_below) if h.building_type else {"db": None, "level": "未知"}
 
-        risk_score = 100
-        if light["level"] == "差": risk_score -= 25
-        elif light["level"] == "中": risk_score -= 10
-        if noise["level"] == "差": risk_score -= 25
-        elif noise["level"] == "中": risk_score -= 10
-        market = config.MARKET_RENT.get(h.district, {}).get(h.layout, h.price)
-        dev = (h.price - market) / market if market else 0
-        if dev > 0.2:
-            risk_score -= 15
+        risk_score = None
+        if has_sim_data:
+            risk_score = 100
+            if light.get("level") == "差": risk_score -= 25
+            elif light.get("level") == "中": risk_score -= 10
+            if noise.get("level") == "差": risk_score -= 25
+            elif noise.get("level") == "中": risk_score -= 10
+            market = config.MARKET_RENT.get(h.district, {}).get(h.layout, h.price)
+            dev = (h.price - market) / market if market else 0
+            if dev > 0.2: risk_score -= 15
+            risk_score = max(0, risk_score)
+
+        risk_label = utils.risk_label(risk_score) if risk_score is not None else None
 
         primary_img = None
         if h.images:
@@ -35,7 +40,7 @@ def list_houses(db: Session, districts=None, layout=None, min_price=0, max_price
             "light": light,
             "noise": noise,
             "risk_score": risk_score,
-            "risk_label": utils.risk_label(risk_score),
+            "risk_label": risk_label,
             "primary_img": primary_img,
         })
 

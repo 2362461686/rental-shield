@@ -1,47 +1,43 @@
-/* ==================== CSS Variables ==================== */
+/* ==================== CSS Variables :rightHouse Design System ==================== */
 :root {
-  /* 暖橙色品牌色系 (INS风低饱和度) */
   --primary: #F59E0B;
   --primary-light: #FBBF24;
   --primary-dark: #D97706;
   --primary-gradient: linear-gradient(135deg, #F59E0B, #FBBF24);
-  --primary-gradient-warm: linear-gradient(135deg, #F59E0B, #EF4444);
 
-  /* 辅助色 */
-  --success: #10B981;
-  --warning: #F59E0B;
-  --danger: #EF4444;
+  --success: #16A34A;
+  --success-light: #DCFCE7;
+  --warning: #D97706;
+  --warning-light: #FEF3C7;
+  --danger: #DC2626;
   --danger-light: #FEE2E2;
+  --info: #3B82F6;
+  --info-light: #DBEAFE;
 
-  /* 背景色 (INS风暖灰) */
-  --bg: #F5F0EB;
-  --bg-warm: #FEF7ED;
+  --bg: #F2F3F5;
   --bg-card: #FFFFFF;
+  --bg-warm: #FEF7ED;
 
-  /* 文字色 */
   --text: #1F2937;
-  --text-secondary: #9CA3AF;
-  --text-muted: #D1D5DB;
-  --text-price: #DC2626;
+  --text-secondary: #6B7280;
+  --text-muted: #9CA3AF;
 
-  /* 边框和分隔 */
   --border: #F3F4F6;
   --border-strong: #E5E7EB;
 
-  /* 阴影 (rightHouse风格大软阴影) */
   --shadow-xs: 0 1px 3px rgba(0,0,0,0.04);
-  --shadow-sm: 0 4px 12px rgba(0,0,0,0.06);
-  --shadow: 0 6px 30px rgba(0,0,0,0.06);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04);
+  --shadow: 0 4px 20px rgba(0,0,0,0.06);
   --shadow-lg: 0 12px 40px rgba(0,0,0,0.08);
   --shadow-blue: 0 6px 30px rgba(55,86,223,0.08);
 
-  /* 圆角 */
   --radius-xs: 6px;
-  --radius-sm: 10px;
-  --radius: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 50px;
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
   --radius-full: 9999px;
+
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ==================== Reset ==================== */
@@ -88,12 +84,59 @@ button{cursor:pointer;font-family:inherit}
   color:var(--primary);border-bottom-color:var(--primary);
 }
 
+/* Hamburger menu (mobile) */
+.hamburger {
+  display: none; flex-direction: column; gap: 5px;
+  background: none; border: none; cursor: pointer;
+  padding: 8px 4px; z-index: 1001;
+}
+.hamburger span {
+  display: block; width: 22px; height: 2px;
+  background: var(--text-secondary); border-radius: 2px;
+  transition: all .25s;
+}
+.hamburger span.open:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+.hamburger span.open:nth-child(2) { opacity: 0; }
+.hamburger span.open:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+.nav-overlay {
+  display: none; position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%; background: rgba(0,0,0,0.3);
+  z-index: 998;
+}
+
+@media (max-width: 768px) {
+  .hamburger { display: flex; }
+  .header-nav {
+    display: none; position: fixed; top: 64px; right: 0;
+    width: 220px; background: #fff; flex-direction: column;
+    gap: 0; padding: 8px 0; box-shadow: -2px 4px 16px rgba(0,0,0,0.1);
+    border-radius: 0 0 0 var(--radius); z-index: 999;
+  }
+  .header-nav.open { display: flex; }
+  .header-nav a {
+    padding: 14px 24px; border-bottom: none;
+    font-size: 15px; width: 100%;
+  }
+  .header-nav a:hover { background: #FAFAFA; }
+  .nav-overlay { display: block; }
+}
+
 /* ==================== Footer ==================== */
 .app-footer{
   background:#fff;border-top:1px solid var(--border);
   padding:20px 24px;text-align:center;
   color:var(--text-secondary);font-size:13px;margin-top:auto;
 }
+
+/* ==================== Card Utility ==================== */
+.card{
+  background: var(--bg-card); border-radius: var(--radius);
+  padding: 24px; transition: transform var(--transition), box-shadow var(--transition);
+  box-shadow: var(--shadow-sm);
+}
+.card:hover{ transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.card--flat:hover{ transform: none; box-shadow: var(--shadow-sm); }
 
 /* ==================== Section Titles ==================== */
 .section-title{
@@ -429,19 +472,47 @@ button{cursor:pointer;font-family:inherit}
 }
 
 /* View toggle buttons */
-.view-toggle{display:flex;gap:8px;margin-bottom:18px}
-.view-toggle button{
+.view-toggle{display:flex;gap:8px;margin-bottom:18px;align-items:center;justify-content:space-between}
+.toggle-group{display:flex;gap:0}
+.toggle-group button{
   padding:8px 20px;border:1.5px solid var(--border-strong);
-  border-radius:var(--radius-sm);background:#fff;
   font-size:14px;font-weight:500;color:var(--text-secondary);
   cursor:pointer;transition:all .2s;
+  background:#fff;
 }
-.view-toggle button.active{
+.toggle-group button:first-child{
+  border-radius:var(--radius-full) 0 0 var(--radius-full);
+}
+.toggle-group button:last-child{
+  border-radius:0 var(--radius-full) var(--radius-full);
+  border-left:none;
+}
+.toggle-group button.active{
   background:var(--primary);color:#fff;border-color:var(--primary);
 }
-.view-toggle button:hover:not(.active){
+.toggle-group button:hover:not(.active){
   border-color:var(--primary);color:var(--primary);
 }
+
+/* Pagination */
+.pagination{
+  display:flex;align-items:center;justify-content:center;
+  gap:16px;padding:24px 0;margin-top:8px;
+}
+.page-btn{
+  padding:8px 20px;border:1.5px solid var(--border-strong);
+  border-radius:var(--radius-full);background:#fff;
+  font-size:14px;font-weight:500;color:var(--text);
+  cursor:pointer;transition:all .2s;
+}
+.page-btn:hover:not(:disabled){
+  border-color:var(--primary);color:var(--primary);
+  box-shadow:0 2px 8px rgba(0,0,0,0.06);
+}
+.page-btn:disabled{
+  opacity:0.4;cursor:not-allowed;
+}
+.page-info{font-size:14px;color:var(--text-secondary)}
 
 /* Workspace bar */
 .workspace-bar{display:flex;gap:6px;margin-top:14px;align-items:center}
@@ -526,4 +597,23 @@ button{cursor:pointer;font-family:inherit}
   .hero-search{flex-direction:column;border-radius:16px;padding:12px}
   .hero-search input{border-radius:12px}
   .hero-search button{border-radius:12px;width:100%}
+  /* Table mobile */
+  .info-grid{grid-template-columns:repeat(2,1fr)}
+  .house-info-table{overflow-x:auto;display:block}
+  .house-info-table table{min-width:600px}
+  /* Detail header meta */
+  .detail-header-meta{flex-wrap:wrap;gap:4px 8px}
+  /* Back to top button smaller on mobile */
+  .back-to-top{bottom:20px;right:16px;width:40px;height:40px}
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+  .page-container{padding:16px 12px}
+  .detail-header h2{font-size:18px}
+  .detail-header-price{font-size:22px}
+  .metric-cards{grid-template-columns:1fr}
+  .info-grid{grid-template-columns:1fr}
+  .an-grid-2,.an-grid-3,.an-grid-4{grid-template-columns:1fr!important}
+  .search-sidebar{width:100%!important}
 }

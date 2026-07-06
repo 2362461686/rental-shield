@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import {
-  fetchHouseDetail, fetchReviews, fetchImages,
+  fetchHouseDetail, fetchPriceHistory, fetchReviews, fetchImages,
   runReviewMining, runLandlordRisk, runFinalAdvice,
   analyzeReviews, addReview,
 } from '../api/client.js'
@@ -10,6 +10,7 @@ export const useDetailStore = defineStore('detail', {
     house: null,
     reviews: [],
     images: [],
+    priceHistory: [],
     reviewMining: null,
     landlordRisk: null,
     finalAdvice: null,
@@ -21,23 +22,25 @@ export const useDetailStore = defineStore('detail', {
   actions: {
     async load(houseId) {
       // Reset
-      this.house = null; this.reviews = []; this.images = []
+      this.house = null; this.reviews = []; this.images = []; this.priceHistory = []
       this.reviewMining = null; this.landlordRisk = null; this.finalAdvice = null
       this.assessment = null
 
       // Phase 1: Load fast data + assessment in parallel
       this.loading.house = this.loading.reviews = this.loading.images = this.loading.assessment = true
       try {
-        const [house, reviews, images, assessment] = await Promise.all([
+        const [house, reviews, images, assessment, priceHistory] = await Promise.all([
           fetchHouseDetail(houseId).catch(e => { this.errors.house = e.message; return null }),
           fetchReviews(houseId).catch(e => { this.errors.reviews = e.message; return [] }),
           fetchImages(houseId).catch(e => { this.errors.images = e.message; return [] }),
           analyzeReviews(houseId).catch(() => null),
+          fetchPriceHistory(houseId).catch(() => []),
         ])
         this.house = house
         this.reviews = reviews
         this.images = images
         this.assessment = assessment
+        this.priceHistory = priceHistory
       } finally {
         this.loading.house = this.loading.reviews = this.loading.images = this.loading.assessment = false
       }
@@ -81,7 +84,7 @@ export const useDetailStore = defineStore('detail', {
     },
 
     clear() {
-      this.house = null; this.reviews = []; this.images = []
+      this.house = null; this.reviews = []; this.images = []; this.priceHistory = []
       this.reviewMining = null; this.landlordRisk = null; this.finalAdvice = null
       this.assessment = null
     },

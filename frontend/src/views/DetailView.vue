@@ -53,6 +53,33 @@
         />
       </div>
 
+      <!-- Commute Info -->
+      <div class="section">
+        <h3 class="section-title">通勤分析</h3>
+        <div v-if="detailStore.house.commute_duration != null" class="commute-card">
+          <div class="commute-metric primary">
+            <span class="commute-label">预估通勤</span>
+            <span class="commute-value" :class="commuteLevel">
+              {{ detailStore.house.commute_duration }}<small>分钟</small>
+            </span>
+          </div>
+          <div class="commute-metric" v-if="detailStore.house.commute_score != null">
+            <span class="commute-label">通勤评分</span>
+            <span class="commute-value">{{ detailStore.house.commute_score }}<small>/100</small></span>
+          </div>
+          <div class="commute-badge" :class="commuteLevel">
+            {{ commuteLabel }}
+          </div>
+        </div>
+        <div v-else-if="houseStore.workspace.configured" class="commute-card muted">
+          <p>正在为你计算到 "<strong>{{ houseStore.workspace.name }}</strong>" 的通勤时间...</p>
+        </div>
+        <div v-else class="commute-card muted">
+          <p>&#x1F4CD; 设置通勤地点后即可计算通勤时间</p>
+          <button class="commute-set-btn" @click="goToSearch">设置通勤地点</button>
+        </div>
+      </div>
+
       <!-- Image Gallery -->
       <ImageGallery
         :images="detailStore.images"
@@ -65,16 +92,55 @@
         <HouseInfoTable :house="detailStore.house" />
       </div>
 
-      <!-- Price Card (inline, market comparison) -->
+      <!-- Price Analysis -->
       <div class="section" v-if="detailStore.house">
         <h3 class="section-title">价格分析</h3>
-        <div class="metric-card price-card">
-          <h3>月租金</h3>
-          <div class="value" style="color: var(--danger);">{{ detailStore.house.price }}<span style="font-size:16px;">元/月</span></div>
-          <p style="color:var(--text-secondary);font-size:13px;">
-            {{ detailStore.house.community }}小区均价：{{ detailStore.house.avg_price ?? '--' }}元/月
-          </p>
+        <div class="price-section">
+          <div class="price-summary-cards">
+            <div class="price-metric">
+              <span class="price-metric-label">月租金</span>
+              <span class="price-metric-value">{{ formatPrice(detailStore.house.price) }}<small>元/月</small></span>
+            </div>
+            <div class="price-metric">
+              <span class="price-metric-label">市场均价</span>
+              <span class="price-metric-value market">{{ formatPrice(detailStore.house.market_price) }}<small>元/月</small></span>
+            </div>
+            <div class="price-metric">
+              <span class="price-metric-label">价格偏差</span>
+              <span class="price-metric-value" :class="priceDevClass">
+                {{ priceDevText }}
+              </span>
+            </div>
+            <div class="price-metric">
+              <span class="price-metric-label">价格合理</span>
+              <span class="price-metric-value" :class="detailStore.house.is_price_reasonable ? 'reasonable' : 'unreasonable'">
+                {{ detailStore.house.is_price_reasonable ? '合理' : '偏高' }}
+              </span>
+            </div>
+          </div>
+          <!-- Price comparison bar -->
+          <div class="price-comparison-bar">
+            <div class="bar-labels">
+              <span>0</span><span>{{ formatPrice(detailStore.house.market_price) }}</span><span>{{ formatPrice(maxBarPrice) }}</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill market-fill" :style="{ width: marketBarPct + '%' }"></div>
+              <div class="bar-fill current-fill" :style="{ width: currentBarPct + '%' }" :class="detailStore.house.is_price_reasonable ? 'bar-ok' : 'bar-high'"></div>
+              <div class="bar-marker" :style="{ left: marketBarPct + '%' }" title="市场均价"></div>
+              <div class="bar-marker current-marker" :style="{ left: currentBarPct + '%' }" title="本房源"></div>
+            </div>
+            <div class="bar-caption">本房源 vs {{ detailStore.house.community || detailStore.house.district }}市场均价</div>
+          </div>
         </div>
+      </div>
+
+      <!-- Price History Chart -->
+      <div class="section" v-if="detailStore.priceHistory.length > 0">
+        <h3 class="section-title">价格走势</h3>
+        <PriceHistoryChart
+          :data="detailStore.priceHistory"
+          :market-price="detailStore.house.market_price"
+        />
       </div>
 
       <!-- Sunlight + Noise side by side -->
@@ -171,7 +237,7 @@
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDetailStore } from '../stores/detail.js'
 import ImageGallery from '../components/house/ImageGallery.vue'
@@ -183,6 +249,7 @@ import LandlordRiskCard from '../components/analysis/LandlordRiskCard.vue'
 import AdvicePanel from '../components/analysis/AdvicePanel.vue'
 import AssessmentReport from '../components/analysis/AssessmentReport.vue'
 import HouseMap from '../components/map/HouseMap.vue'
+import PriceHistoryChart from '../components/house/PriceHistoryChart.vue'
 import Spinner from '../components/ui/Spinner.vue'
 import { useFavoriteStore } from '../stores/favorites.js'
 import { useHouseStore } from '../stores/house.js'
@@ -233,10 +300,60 @@ function goBack() {
   router.push('/search')
 }
 
+// ── Price analysis computed ──
+const maxBarPrice = computed(() => {
+  const h = detailStore.house
+  if (!h) return 8000
+  const mp = h.market_price || 0
+  const p = h.price || 0
+  return Math.max(mp, p) * 1.3
+})
+const marketBarPct = computed(() => {
+  const h = detailStore.house
+  if (!h || !maxBarPrice.value) return 50
+  return ((h.market_price || 0) / maxBarPrice.value) * 100
+})
+const currentBarPct = computed(() => {
+  const h = detailStore.house
+  if (!h || !maxBarPrice.value) return 50
+  return ((h.price || 0) / maxBarPrice.value) * 100
+})
+const priceDevText = computed(() => {
+  const h = detailStore.house
+  if (!h || h.price_deviation == null) return '--'
+  const pct = Math.round(h.price_deviation * 100)
+  return pct > 0 ? `+${pct}%` : `${pct}%`
+})
+const priceDevClass = computed(() => {
+  const h = detailStore.house
+  if (!h || h.price_deviation == null) return ''
+  return h.is_price_reasonable ? 'reasonable' : 'unreasonable'
+})
+
 function formatPrice(price) {
   if (!price) return '--'
   const num = Number(price)
   return isNaN(num) ? price : num.toLocaleString('zh-CN')
+}
+
+// ── Commute computed ──
+const commuteLevel = computed(() => {
+  const d = detailStore.house?.commute_duration
+  if (d == null) return 'unknown'
+  if (d <= 30) return 'good'
+  if (d <= 60) return 'ok'
+  return 'bad'
+})
+const commuteLabel = computed(() => {
+  const d = detailStore.house?.commute_duration
+  if (d == null) return '未计算'
+  if (d <= 30) return '通勤便利'
+  if (d <= 60) return '通勤适中'
+  return '通勤较远'
+})
+
+function goToSearch() {
+  router.push('/search')
 }
 
 async function handleFavorite() {
@@ -247,7 +364,63 @@ async function handleFavorite() {
 <style scoped>
 .detail-page { padding: 0; }
 .detail-skeleton { padding: 0; }
-.price-card { max-width: 360px; }
+
+/* Price Analysis Section */
+.price-section { background: #fff; border-radius: var(--radius); padding: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+.price-summary-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+.price-metric { text-align: center; }
+.price-metric-label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+.price-metric-value { font-size: 20px; font-weight: 700; color: var(--text); }
+.price-metric-value small { font-size: 12px; font-weight: 400; color: var(--text-secondary); }
+.price-metric-value.market { color: var(--text-secondary); }
+.price-metric-value.reasonable { color: #16A34A; }
+.price-metric-value.unreasonable { color: var(--danger); }
+.price-comparison-bar { margin-top: 8px; }
+.bar-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+.bar-track { position: relative; height: 24px; background: #F3F4F6; border-radius: 12px; overflow: hidden; }
+.bar-fill { position: absolute; top: 0; left: 0; height: 100%; border-radius: 12px; transition: width .4s ease; }
+.market-fill { background: rgba(156,163,175,0.4); z-index: 1; }
+.current-fill { z-index: 2; opacity: 0.7; }
+.current-fill.bar-ok { background: var(--primary); }
+.current-fill.bar-high { background: var(--danger); }
+.bar-marker { position: absolute; top: 0; width: 3px; height: 100%; background: var(--text-secondary); z-index: 3; transition: left .4s ease; }
+.bar-marker.current-marker { background: var(--text); width: 3px; }
+.bar-caption { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 8px; }
+
+@media (max-width: 768px) {
+  .price-summary-cards { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Commute Card */
+.commute-card {
+  background: #fff; border-radius: var(--radius); padding: 20px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  display: flex; gap: 24px; align-items: center; flex-wrap: wrap;
+}
+.commute-card.muted { background: #FAFAFA; justify-content: center; text-align: center; }
+.commute-card.muted p { margin: 0; font-size: 14px; color: var(--text-secondary); line-height: 1.8; }
+.commute-metric { text-align: center; }
+.commute-metric.primary { min-width: 120px; }
+.commute-label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+.commute-value { font-size: 28px; font-weight: 800; color: var(--text); }
+.commute-value small { font-size: 14px; font-weight: 400; color: var(--text-secondary); }
+.commute-value.good { color: #16A34A; }
+.commute-value.ok { color: var(--primary); }
+.commute-value.bad { color: var(--danger); }
+.commute-badge {
+  padding: 6px 16px; border-radius: var(--radius-full);
+  font-size: 13px; font-weight: 600;
+}
+.commute-badge.good { background: #DCFCE7; color: #166534; }
+.commute-badge.ok { background: #FEF3C7; color: #92400E; }
+.commute-badge.bad { background: #FEE2E2; color: #991B1B; }
+.commute-set-btn {
+  margin-top: 10px; padding: 8px 20px; border: none;
+  border-radius: var(--radius-full); background: var(--primary-gradient);
+  color: #fff; font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: transform .15s;
+}
+.commute-set-btn:hover { transform: scale(1.03); }
 
 /* ── 补充评价 ── */
 .review-add-box {

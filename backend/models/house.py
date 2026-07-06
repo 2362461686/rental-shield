@@ -10,18 +10,18 @@ class HouseSummary(BaseModel):
     title: str
     district: str
     community: str
-    layout: str
-    area: float
-    price: int
-    orientation: str
-    floor: int
-    total_floors: int
-    sunlight_hours: float
-    sunlight_level: str
-    noise_db: float
-    noise_level: str
-    risk_score: int
-    risk_label: str
+    layout: str = ""
+    area: float = 0
+    price: int = 0
+    orientation: str = ""
+    floor: int = 1
+    total_floors: int = 1
+    sunlight_hours: Optional[float] = None
+    sunlight_level: str = "未知"
+    noise_db: Optional[float] = None
+    noise_level: str = "未知"
+    risk_score: Optional[int] = None
+    risk_label: Optional[str] = None
     primary_image_url: Optional[str] = None
     review_count: int = 0
     latitude: Optional[float] = None

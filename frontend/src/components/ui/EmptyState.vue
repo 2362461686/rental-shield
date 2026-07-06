@@ -1,8 +1,9 @@
 <template>
   <div class="empty-state">
-    <div class="icon">{{ icon }}</div>
+    <div class="icon" v-html="icon"></div>
     <h3>{{ title }}</h3>
     <p v-if="description">{{ description }}</p>
+    <slot></slot>
   </div>
 </template>
 

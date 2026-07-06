@@ -5,14 +5,18 @@
     <!-- Keyword search -->
     <div class="filter-group">
       <label>关键词</label>
-      <input
-        v-model="localFilters.keyword"
-        type="text"
-        class="filter-input"
-        placeholder="搜索小区名、标题..."
-        @keyup.enter="handleSearch"
-        @input="syncToStore"
-      />
+      <div class="kw-input-wrap">
+        <input
+          v-model="localFilters.keyword"
+          type="text"
+          class="filter-input"
+          placeholder="输入小区名搜索，如：骏景花园、祈福新邨..."
+          @keyup.enter="handleSearch"
+          @input="onKeywordInput"
+        />
+        <button v-if="localFilters.keyword" class="kw-clear" @click="clearKeyword">&#x2716;</button>
+      </div>
+      <p class="kw-hint" v-if="localFilters.keyword">输入后点击"搜索房源"查找</p>
     </div>
 
     <!-- District multi-select -->
@@ -69,6 +73,14 @@
           min="0"
           max="8000"
         />
+      </div>
+      <div class="price-presets">
+        <button
+          v-for="preset in pricePresets"
+          :key="preset.label"
+          :class="{ active: isPresetActive(preset) }"
+          @click="applyPreset(preset)"
+        >{{ preset.label }}</button>
       </div>
       <input
         type="range"
@@ -129,6 +141,14 @@ const houseStore = useHouseStore()
 
 const districtOptions = ['天河', '海珠', '番禺', '越秀', '荔湾', '白云']
 const sortOptions = ['综合推荐', '价格从低到高', '价格从高到低', '光照最优', '隔音最优']
+const pricePresets = [
+  { label: '不限', min: 0, max: 8000 },
+  { label: '1000以下', min: 0, max: 1000 },
+  { label: '1000-2000', min: 1000, max: 2000 },
+  { label: '2000-4000', min: 2000, max: 4000 },
+  { label: '4000-6000', min: 4000, max: 6000 },
+  { label: '6000+', min: 6000, max: 8000 },
+]
 const districtCounts = ref({})
 const subwayLines = ref([])
 const localSubwayLine = ref('')
@@ -189,6 +209,25 @@ function selectSubwayLine() {
   houseStore.setSubwayLine(localSubwayLine.value)
 }
 
+function isPresetActive(preset) {
+  return localFilters.minPrice === preset.min && localFilters.maxPrice === preset.max
+}
+
+function applyPreset(preset) {
+  localFilters.minPrice = preset.min
+  localFilters.maxPrice = preset.max
+  syncToStore()
+}
+
+function onKeywordInput() {
+  syncToStore()
+}
+
+function clearKeyword() {
+  localFilters.keyword = ''
+  syncToStore()
+}
+
 function handleSearch() {
   syncToStore()
   emit('search')
@@ -210,12 +249,21 @@ watch(
 </script>
 
 <style scoped>
+.kw-input-wrap { position: relative; }
 .filter-input {
-  width: 100%; padding: 10px 12px;
+  width: 100%; padding: 10px 32px 10px 12px;
   border: 1.5px solid var(--border); border-radius: 8px;
   font-size: 14px; outline: none; background: #fff; box-sizing: border-box;
 }
 .filter-input:focus { border-color: var(--accent); }
+.kw-clear {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: var(--text-muted);
+  cursor: pointer; font-size: 13px; padding: 2px 6px;
+  border-radius: 50%;
+}
+.kw-clear:hover { background: #F3F4F6; color: var(--text); }
+.kw-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; margin-bottom: 0; }
 
 .price-inputs {
   display: flex;
@@ -241,6 +289,22 @@ watch(
 .price-sep {
   color: var(--text-secondary);
   font-size: 14px;
+}
+
+.price-presets {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px;
+}
+.price-presets button {
+  padding: 4px 10px; border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius-full); background: #fff;
+  font-size: 12px; font-weight: 500; color: var(--text-secondary);
+  cursor: pointer; transition: all .15s;
+}
+.price-presets button:hover:not(.active) {
+  border-color: var(--primary); color: var(--primary);
+}
+.price-presets button.active {
+  background: var(--primary); color: #fff; border-color: var(--primary);
 }
 
 .district-badge {

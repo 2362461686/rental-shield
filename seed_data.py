@@ -44,6 +44,7 @@ def generate_data():
     # 一、创建 10 个房东（至少 3 个有投诉记录）
     # ============================================================
     landlord_data = [
+        # 不良 records
         {"phone": "13800001001", "name": "张先生", "type": "一手房东", "complaint_count": 0, "risk_tags": ""},
         {"phone": "13800001002", "name": "李女士", "type": "一手房东", "complaint_count": 5, "risk_tags": "押金纠纷,维修推诿"},
         {"phone": "13800001003", "name": "王先生", "type": "二房东", "complaint_count": 3, "risk_tags": "随意涨租,二房东转租"},
@@ -54,6 +55,37 @@ def generate_data():
         {"phone": "13800001008", "name": "周女士", "type": "一手房东", "complaint_count": 0, "risk_tags": ""},
         {"phone": "13800001009", "name": "吴先生", "type": "一手房东", "complaint_count": 0, "risk_tags": ""},
         {"phone": "13800001010", "name": "郑女士", "type": "一手房东", "complaint_count": 0, "risk_tags": ""},
+        # new landlords for expanded data
+        {"phone": "13800001011", "name": "钱先生", "type": "一手房东", "complaint_count": 0, "risk_tags": ""},
+        {"phone": "13800001012", "name": "孙女士", "type": "二房东", "complaint_count": 2, "risk_tags": "押金纠纷"},
+        {"phone": "13800001013", "name": "马先生", "type": "一手房东", "complaint_count": 0, "risk_tags": ""},
+        {"phone": "13800001014", "name": "朱女士", "type": "公寓托管", "complaint_count": 4, "risk_tags": "维修推诿,态度恶劣"},
+        {"phone": "13800001015", "name": "胡先生", "type": "一手房东", "complaint_count": 0, "risk_tags": ""},
+        {"phone": "13800001016", "name": "林女士", "type": "中介", "complaint_count": 6, "risk_tags": "随意涨租,二房东转租,押金不退"},
+        {"phone": "13800001017", "name": "何先生", "type": "一手房东", "complaint_count": 0, "risk_tags": ""},
+        {"phone": "13800001018", "name": "郭女士", "type": "一手房东", "complaint_count": 2, "risk_tags": "押金纠纷"},
+        {"phone": "13800001019", "name": "蔡先生", "type": "一手房东", "complaint_count": 0, "risk_tags": ""},
+        {"phone": "13800001020", "name": "许女士", "type": "一手房东", "complaint_count": 0, "risk_tags": ""},
+        {"phone": "13800001021", "name": "沈先生", "type": "一手房东", "complaint_count": 0, "risk_tags": ""},
+        {"phone": "13800001022", "name": "韩女士", "type": "二房东", "complaint_count": 3, "risk_tags": "押金纠纷,随意涨租"},
+        {"phone": "13800001023", "name": "杨先生", "type": "一手房东", "complaint_count": 0, "risk_tags": ""},
+        {"phone": "13800001024", "name": "朱先生", "type": "中介", "complaint_count": 5, "risk_tags": "押金不退,随意涨租,维修推诿"},
+        {"phone": "13800001025", "name": "秦女士", "type": "一手房东", "complaint_count": 0, "risk_tags": ""},
+        {"phone": "13800001026", "name": "尤先生", "type": "一手房东", "complaint_count": 1, "risk_tags": "态度恶劣"},
+        {"phone": "13800001027", "name": "许先生", "type": "公寓托管", "complaint_count": 0, "risk_tags": ""},
+        {"phone": "13800001028", "name": "何女士", "type": "一手房东", "complaint_count": 0, "risk_tags": ""},
+        {"phone": "13800001029", "name": "吕先生", "type": "一手房东", "complaint_count": 0, "risk_tags": ""},
+        {"phone": "13800001030", "name": "施女士", "type": "一手房东", "complaint_count": 2, "risk_tags": "押金纠纷,维修推诿"},
+        {"phone": "13800001031", "name": "张女士", "type": "一手房东", "complaint_count": 0, "risk_tags": ""},
+        {"phone": "13800001032", "name": "孔先生", "type": "一手房东", "complaint_count": 0, "risk_tags": ""},
+        {"phone": "13800001033", "name": "曹女士", "type": "二房东", "complaint_count": 4, "risk_tags": "押金纠纷,二房东转租,态度恶劣"},
+        {"phone": "13800001034", "name": "严先生", "type": "一手房东", "complaint_count": 0, "risk_tags": ""},
+        {"phone": "13800001035", "name": "华女士", "type": "一手房东", "complaint_count": 0, "risk_tags": ""},
+        {"phone": "13800001036", "name": "金先生", "type": "中介", "complaint_count": 7, "risk_tags": "押金不退,随意涨租,维修推诿,态度恶劣"},
+        {"phone": "13800001037", "name": "魏女士", "type": "一手房东", "complaint_count": 0, "risk_tags": ""},
+        {"phone": "13800001038", "name": "陶先生", "type": "一手房东", "complaint_count": 0, "risk_tags": ""},
+        {"phone": "13800001039", "name": "姜女士", "type": "一手房东", "complaint_count": 1, "risk_tags": "押金纠纷"},
+        {"phone": "13800001040", "name": "戚先生", "type": "一手房东", "complaint_count": 0, "risk_tags": ""},
     ]
     landlords = []
     for ld in landlord_data:
@@ -69,34 +101,43 @@ def generate_data():
     session.commit()
 
     # ============================================================
-    # 二、各区域房源配置
-    # 区域分布：天河10, 海珠10, 番禺10, 越秀8, 荔湾7, 白云5
+    # 二、各区域房源配置 - 扩展到 10 区 500 套房源
     # ============================================================
     district_config = [
-        # (区域, 数量, 小区列表, 户型分布("一室"数量,"两室"数量)...)
-        ("天河", 10, ["骏景花园", "中海康城", "华景新城", "天朗明居", "棠德花苑", "侨林苑", "东方新世界", "骏逸苑", "旭景家园", "美林湖畔"]),
-        ("海珠", 10, ["光大花园", "江南新苑", "保利花园", "逸景翠园", "金碧花园", "翠城花园", "罗马家园", "愉景雅苑", "海富花园", "富力千禧"]),
-        ("番禺", 10, ["祈福新邨", "华南新城", "广州雅居乐", "锦绣香江", "南国奥园", "星河湾", "丽江花园", "万科欧泊", "金山谷", "亚运城"]),
-        ("越秀", 8, ["锦城花园", "富力广场", "东湖新村", "华侨新村", "小北花苑", "六榕小区", "农林上苑", "淘金家园"]),
-        ("荔湾", 7, ["恒荔湾畔", "花地湾花园", "芳村花园", "四季花园", "荔港南湾", "富力唐宁", "新世界花园"]),
-        ("白云", 5, ["岭南新世界", "白云高尔夫", "金碧雅苑", "万科金域蓝湾", "保利紫薇花园"]),
+        ("天河", 60, ["骏景花园", "中海康城", "华景新城", "天朗明居", "棠德花苑", "侨林苑", "东方新世界", "骏逸苑", "旭景家园", "美林湖畔"]),
+        ("海珠", 60, ["光大花园", "江南新苑", "保利花园", "逸景翠园", "金碧花园", "翠城花园", "罗马家园", "愉景雅苑", "海富花园", "富力千禧"]),
+        ("番禺", 60, ["祈福新邨", "华南新城", "广州雅居乐", "锦绣香江", "南国奥园", "星河湾", "丽江花园", "万科欧泊", "金山谷", "亚运城"]),
+        ("越秀", 50, ["锦城花园", "富力广场", "东湖新村", "华侨新村", "小北花苑", "六榕小区", "农林上苑", "淘金家园"]),
+        ("荔湾", 50, ["恒荔湾畔", "花地湾花园", "芳村花园", "四季花园", "荔港南湾", "富力唐宁", "新世界花园"]),
+        ("白云", 50, ["岭南新世界", "白云高尔夫", "金碧雅苑", "万科金域蓝湾", "保利紫薇花园"]),
+        ("黄埔", 50, ["万科东荟城", "保利罗兰国际", "中海誉城", "万科金色梦想", "科城山庄"]),
+        ("花都", 40, ["自由人花园", "雅居乐锦城", "美林湖国际社区", "花都凤凰御景"]),
+        ("增城", 40, ["碧桂园凤凰城", "翡翠绿洲", "合生湖山国际", "新塘花园"]),
+        ("南沙", 40, ["星河山海湾", "碧桂园天玺湾", "时代南湾", "越秀滨海郡城"]),
     ]
 
-    # 户型分布规则
-    layouts = ["一室"] * 20 + ["两室"] * 25 + ["三室及以上"] * 5
+    # 户型分布：一室 30%, 两室 45%, 三室及以上 25%
+    total = sum(c[1] for c in district_config)
+    layouts = (["一室"] * int(total * 0.30) + ["两室"] * int(total * 0.45) + ["三室及以上"] * int(total * 0.25))
+    while len(layouts) < total:
+        layouts.append("两室")
     random.shuffle(layouts)
 
     # 朝向分布
-    orientations = ["南"] * 12 + ["北"] * 6 + ["东南"] * 8 + ["西南"] * 6 + ["东"] * 5 + ["西"] * 4 + ["东北"] * 5 + ["西北"] * 4
+    orientations = ["南"] * 120 + ["北"] * 60 + ["东南"] * 80 + ["西南"] * 60 + ["东"] * 50 + ["西"] * 40 + ["东北"] * 40 + ["西北"] * 50
     random.shuffle(orientations)
 
-    # 窗户类型分布
-    window_types = ["落地窗"] * 10 + ["普通窗"] * 30 + ["小窗"] * 10
+    # 窗户类型
+    window_types = ["落地窗"] * 100 + ["普通窗"] * 300 + ["小窗"] * 100
     random.shuffle(window_types)
 
-    # 建筑类型分布
-    building_types = ["塔楼"] * 25 + ["板楼"] * 20 + ["自建房"] * 5
+    # 建筑类型
+    building_types = ["塔楼"] * 240 + ["板楼"] * 200 + ["自建房"] * 60
     random.shuffle(building_types)
+
+    # 装修档次
+    decorations = ["精装修"] * 200 + ["简装"] * 200 + ["毛坯"] * 40 + ["豪华装修"] * 60
+    random.shuffle(decorations)
 
     house_id = 0
     houses_records = []
@@ -141,12 +182,15 @@ def generate_data():
             # 底商：15 个房源有底商
             has_business_below = house_id <= 15
 
-            # 分配房东（循环使用 10 个房东）
-            landlord_idx = (house_id - 1) % 10
+            # 分配房东（循环使用 20 个房东）
+            landlord_idx = (house_id - 1) % len(landlord_data)
             landlord_phone_hash = hash_phone(landlord_data[landlord_idx]["phone"])
 
+            # 装修档次
+            decoration = decorations.pop() if decorations else "简装"
+
             # 房源标题
-            title = f"{community}{layout}丨{orientation}向丨{'精装修' if random.random() > 0.3 else '简装'}丨近地铁"
+            title = f"{community}{layout}丨{orientation}向丨{decoration}丨近地铁"
 
             # 经纬度：从配置中取基准坐标，加随机偏移避免地图标记重叠
             base_lat, base_lng = config.COMMUNITY_COORDS.get(community, (23.13, 113.30))
@@ -204,8 +248,8 @@ def generate_data():
     platforms = ["小红书", "豆瓣", "链家"]
 
     for house in houses_records:
-        # 每个房源 2-4 条评论
-        num_reviews = random.randint(2, 4)
+        # 每个房源 1-4 条评论
+        num_reviews = random.randint(1, 4)
         for r in range(num_reviews):
             # 随机组合正面和负面评论
             selected_pos = []
@@ -226,7 +270,7 @@ def generate_data():
                     selected_pos.append(random.choice(positive_templates["sound"]))
 
             # 根据房东投诉数决定房东评论
-            landlord_data_item = landlord_data[house.id % 10]
+            landlord_data_item = landlord_data[house.id % len(landlord_data)]
             if landlord_data_item["complaint_count"] >= 3:
                 if random.random() > 0.5:
                     selected_neg.append(random.choice(negative_templates["landlord"]))

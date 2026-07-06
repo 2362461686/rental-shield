@@ -1,15 +1,15 @@
 <template>
   <div class="favorites-view">
     <h2>我的收藏</h2>
-    <div v-if="favStore.loading" class="loading">
-      <p>加载中...</p>
-    </div>
-    <div v-else-if="favStore.favorites.length === 0" class="empty-state">
-      <div class="icon">&#x2B50;</div>
-      <p>还没有收藏的房源</p>
-      <p style="font-size:13px;margin-top:8px">在搜索页面发现心仪房源，点击收藏按钮即可保存</p>
+    <Spinner v-if="favStore.loading" text="加载收藏列表..." />
+    <EmptyState
+      v-else-if="favStore.favorites.length === 0"
+      icon="&#x2B50;"
+      title="还没有收藏的房源"
+      description="在搜索页面发现心仪房源，点击收藏按钮即可保存"
+    >
       <router-link to="/search" class="go-search-btn">去搜索房源</router-link>
-    </div>
+    </EmptyState>
     <div v-else>
       <p class="results-count">共收藏 <strong>{{ favStore.favorites.length }}</strong> 套房源</p>
       <HouseCard
@@ -25,6 +25,8 @@
 import { onMounted } from 'vue'
 import { useFavoriteStore } from '../stores/favorites.js'
 import HouseCard from '../components/house/HouseCard.vue'
+import EmptyState from '../components/ui/EmptyState.vue'
+import Spinner from '../components/ui/Spinner.vue'
 
 const favStore = useFavoriteStore()
 

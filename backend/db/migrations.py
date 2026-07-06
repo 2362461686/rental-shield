@@ -32,9 +32,9 @@ def add_column(db_path: str, table: str, column: str, col_type: str):
     conn = sqlite3.connect(db_path)
     if not column_exists(db_path, table, column):
         conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}")
-        print(f"  ✅ 已添加 {table}.{column} ({col_type})")
+        print(f"  [OK] Added {table}.{column} ({col_type})")
     else:
-        print(f"  ⏭️  {table}.{column} 已存在，跳过")
+        print(f"  [SKIP] {table}.{column} already exists")
     conn.commit()
     conn.close()
 
@@ -44,9 +44,9 @@ def create_table_if_not_exists(db_path: str, table: str, ddl: str):
     conn = sqlite3.connect(db_path)
     if not table_exists(db_path, table):
         conn.execute(ddl)
-        print(f"  ✅ 已创建表 {table}")
+        print(f"  [OK] Created table {table}")
     else:
-        print(f"  ⏭️  表 {table} 已存在，跳过")
+        print(f"  [SKIP] Table {table} already exists")
     conn.commit()
     conn.close()
 
@@ -56,10 +56,10 @@ def run_migrations():
     db_path = get_db_path()
 
     if not os.path.exists(db_path):
-        print("⚠️  数据库文件不存在，跳过迁移（将由 ORM 自动创建）")
+        print("[WARN] Database file not found, skipping migrations (ORM will create)")
         return
 
-    print("🔧 开始数据库迁移...")
+    print("[INFO] Starting database migrations...")
 
     # 1. houses 表新增列
     add_column(db_path, "houses", "latitude", "FLOAT")
@@ -101,7 +101,7 @@ def run_migrations():
         )
     """)
 
-    print("✅ 数据库迁移完成")
+    print("[OK] Database migrations complete")
 
 
 if __name__ == "__main__":
